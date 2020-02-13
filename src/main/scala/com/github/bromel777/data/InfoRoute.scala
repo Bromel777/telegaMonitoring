@@ -1,0 +1,59 @@
+package com.github.bromel777.data
+
+import io.circe.{Decoder, HCursor}
+
+case class InfoRoute(nodeName: String,
+                     stateType: String,
+                     headersHeight: Int,
+                     fullHeight: Int,
+                     bestHeaderId: String,
+                     bestFullHeaderId: String,
+                     previousFullHeaderId: String,
+                     difficulty: Long,
+                     unconfirmedCount: Long,
+                     stateVersion: String,
+                     isMining: Boolean,
+                     peersCount: Int,
+                     knownPeers: List[String],
+                     storage: String,
+                     isConnectedWithKnownPeers: Boolean)
+
+object InfoRoute {
+
+  val heightDecoder: Decoder[Int] = (c: HCursor) => {c.downField("fullHeight").as[Int]}
+
+  implicit val decoder: Decoder[InfoRoute] = (c: HCursor) => for {
+    nodeName                  <- c.downField("name").as[String]
+    stateType                 <- c.downField("stateType").as[String]
+    headersHeight             <- c.downField("headersHeight").as[Int]
+    fullHeight                <- c.downField("fullHeight").as[Int]
+    bestHeaderId              <- c.downField("bestHeaderId").as[String]
+    bestFullHeaderId          <- c.downField("bestFullHeaderId").as[Option[String]]
+    previousFullHeaderId      <- c.downField("previousFullHeaderId").as[Option[String]]
+    difficulty                <- c.downField("difficulty").as[Long]
+    unconfirmedCount          <- c.downField("unconfirmedCount").as[Long]
+    stateVersion              <- c.downField("stateVersion").as[String]
+    isMining                  <- c.downField("isMining").as[Boolean]
+    peersCount                <- c.downField("peersCount").as[Int]
+    knownPeers                <- c.downField("knownPeers").as[List[String]]
+    storage                   <- c.downField("storage").as[String]
+    isConnectedWithKnownPeers <- c.downField("isConnectedWithKnownPeers").as[Boolean]
+  } yield InfoRoute(
+    nodeName,
+    stateType,
+    headersHeight,
+    fullHeight,
+    bestHeaderId,
+    bestFullHeaderId.getOrElse(""),
+    previousFullHeaderId.getOrElse(""),
+    difficulty,
+    unconfirmedCount,
+    stateVersion,
+    isMining,
+    peersCount,
+    knownPeers,
+    storage,
+    isConnectedWithKnownPeers
+  )
+}
+
