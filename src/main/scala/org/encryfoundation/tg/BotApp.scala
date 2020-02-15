@@ -1,0 +1,35 @@
+package org.encryfoundation.tg
+
+import canoe.api.{Bot, TelegramClient}
+import cats.Applicative
+import cats.effect.{ConcurrentEffect, ExitCode, IO, IOApp, Resource}
+import cats.implicits._
+import fs2.Stream
+import io.chrisdavenport.log4cats.Logger
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import org.encryfoundation.tg.config.BotConfig
+import org.encryfoundation.tg.services.Explorer
+import org.http4s.client.blaze.BlazeClientBuilder
+import retry.Sleep
+
+import scala.concurrent.ExecutionContext.global
+
+object BotApp extends IOApp {
+
+  override def run(args: List[String]): IO[ExitCode] = Stream.resource(env[IO]).flatMap {
+    case (tgClient, config, explorer) =>
+      implicit val client = tgClient
+      val bot = Bot.polling[IO]
+      bot.follow(scenarios.nodeStatusMonitoring(explorer, config))
+  }.compile.drain.as(ExitCode.Success)
+
+  def getConfig[F[_]: Applicative]: F[BotConfig] = BotConfig.loadConfig("local.conf").pure[F]
+
+  def env[F[_]: ConcurrentEffect: Sleep] = for {
+    config  <- Resource.liftF(getConfig[F])
+    implicit0(logger: Logger[F]) = Slf4jLogger.create[F]
+    tgClient <- TelegramClient.global[F](config.tg.token)
+    blazeClient <- BlazeClientBuilder[F](global).resource
+    explorer <- Explorer[F](blazeClient, config)
+  } yield (tgClient, config,  explorer)
+}

@@ -1,13 +1,13 @@
-package com.github.bromel777.config
+package org.encryfoundation.tg.config
 
 import com.comcast.ip4s.{Ipv4Address, Port, SocketAddress}
-import com.github.bromel777.config.BotConfig.TelegramConfig
+import BotConfig.{Nodes, TelegramConfig}
 import com.typesafe.config.{Config, ConfigFactory}
 import net.ceedubs.ficus.Ficus._
 import net.ceedubs.ficus.readers.ArbitraryTypeReader._
 import net.ceedubs.ficus.readers.ValueReader
 
-case class BotConfig(tg: TelegramConfig)
+case class BotConfig(tg: TelegramConfig, nodes: Nodes)
 
 object BotConfig {
 

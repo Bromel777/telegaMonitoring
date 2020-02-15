@@ -1,4 +1,4 @@
-package com.github.bromel777.data
+package org.encryfoundation.tg.data
 
 import io.circe.{Decoder, HCursor}
 
