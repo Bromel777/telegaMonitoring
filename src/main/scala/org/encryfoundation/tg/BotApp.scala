@@ -16,20 +16,25 @@ import scala.concurrent.ExecutionContext.global
 
 object BotApp extends IOApp {
 
-  override def run(args: List[String]): IO[ExitCode] = Stream.resource(env[IO]).flatMap {
-    case (tgClient, config, explorer) =>
-      implicit val client = tgClient
-      val bot = Bot.polling[IO]
-      bot.follow(scenarios.nodeStatusMonitoring(explorer, config))
-  }.compile.drain.as(ExitCode.Success)
+  override def run(args: List[String]): IO[ExitCode] = {
+    Stream.eval(Slf4jLogger.create[IO]).flatMap(implicit logger =>
+        Stream.resource(env[IO]).flatMap {
+          case (tgClient, config, explorer) =>
+            implicit val client = tgClient
+            val bot = Bot.polling[IO]
+            bot.follow(scenarios.nodeStatusMonitoring(explorer, config))
+        }
+    ).compile.drain.as(ExitCode.Success)
+  }
 
   def getConfig[F[_]: Applicative]: F[BotConfig] = BotConfig.loadConfig("local.conf").pure[F]
 
-  def env[F[_]: ConcurrentEffect: Sleep] = for {
+  def env[F[_]: ConcurrentEffect: Sleep: Logger] = for {
     config  <- Resource.liftF(getConfig[F])
-    implicit0(logger: Logger[F]) = Slf4jLogger.create[F]
     tgClient <- TelegramClient.global[F](config.tg.token)
     blazeClient <- BlazeClientBuilder[F](global).resource
     explorer <- Explorer[F](blazeClient, config)
-  } yield (tgClient, config,  explorer)
+  } yield {
+    (tgClient, config,  explorer)
+  }
 }
