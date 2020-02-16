@@ -39,7 +39,7 @@ libraryDependencies ++= Seq(
   "co.fs2" %% "fs2-core" % "2.1.0",
   "co.fs2" %% "fs2-io" % "2.1.0",
   "io.circe" %% "circe-generic" % "0.11.2",
-  "org.augustjune" %% "canoe" % "0.2.0",
+  "org.augustjune" %% "canoe" % "0.4.1",
   "com.github.cb372" %% "cats-retry" % "1.1.0"
 ) ++ fs2
 

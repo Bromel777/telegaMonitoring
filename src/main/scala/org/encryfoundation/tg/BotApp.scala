@@ -1,7 +1,9 @@
 package org.encryfoundation.tg
 
-import canoe.api.{Bot, TelegramClient}
+import canoe.api._
+import canoe.syntax._
 import cats.Applicative
+import cats.effect.concurrent.Ref
 import cats.effect.{ConcurrentEffect, ExitCode, IO, IOApp, Resource}
 import cats.implicits._
 import fs2.Stream
@@ -22,7 +24,13 @@ object BotApp extends IOApp {
           case (tgClient, config, explorer) =>
             implicit val client = tgClient
             val bot = Bot.polling[IO]
-            bot.follow(scenarios.nodeStatusMonitoring(explorer, config), scenarios.chainMonitoring(explorer, config))
+            Stream.eval(Ref.of[IO, Map[String, Boolean]](config.nodes.nodes.map(ip => ip.toString() -> true).toMap)).flatMap { map =>
+              bot.follow(
+                scenarios.nodeStatusMonitoring(explorer, config),
+                scenarios.chainMonitoring(explorer, config),
+                scenarios.startNodeMonitoring(explorer, config, map).stopOn(command("cancel").isDefinedAt)
+              )
+            }
         }
     ).compile.drain.as(ExitCode.Success)
   }
