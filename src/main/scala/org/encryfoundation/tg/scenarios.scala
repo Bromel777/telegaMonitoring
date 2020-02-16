@@ -15,4 +15,13 @@ object scenarios {
     _ <- Scenario.eval(chat.send(nodeInfo.asJson.toString()))
   } yield ()
 
+  def chainMonitoring[F[_]: TelegramClient](explorer: Explorer[F], config: BotConfig) = for {
+    chat <- Scenario.start(command("chainstatus").chat)
+    nodesStatus <- Scenario.eval(explorer.nodesStatus)
+    _ <- Scenario.eval(chat.send(nodesStatus.map { case (isActive, ip) =>
+        val status = if (isActive) '\u2705' else '\u274C'
+        List(status, ip).mkString(" ")
+    }.mkString("\n ")))
+  } yield ()
+
 }

@@ -4,6 +4,7 @@ import java.util.concurrent.Executors
 
 import cats.Monad
 import cats.effect.{ConcurrentEffect, Resource, Sync}
+import cats.implicits._
 import io.chrisdavenport.log4cats.Logger
 import io.circe.Decoder
 import org.encryfoundation.tg.config.BotConfig
@@ -20,6 +21,7 @@ import scala.concurrent.ExecutionContext
 trait Explorer[F[_]] {
 
   def getInfo: F[InfoRoute]
+  def nodesStatus: F[List[(Boolean, String)]]
 }
 
 object Explorer {
@@ -32,6 +34,15 @@ object Explorer {
         Uri.unsafeFromString(s"http://${config.nodes.nodes.head}/info")
       )
       makeGetRequest[InfoRoute](req)
+    }
+
+    override def nodesStatus: F[List[(Boolean, String)]] = config.nodes.nodes.traverse { nodeIp =>
+      val req = Request[F](
+        Method.GET,
+        Uri.unsafeFromString(s"http://${nodeIp}/info")
+      )
+      makeGetRequest[InfoRoute](req).map(_ => true -> nodeIp.toString())
+        .handleError(_ => false -> nodeIp.toString())
     }
 
     private def makeGetRequest[T](req: Request[F])(implicit decoder: Decoder[T]): F[T] =
