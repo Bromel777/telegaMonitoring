@@ -3,13 +3,15 @@ package org.encryfoundation.tg
 import canoe.api.{Scenario, TelegramClient, _}
 import canoe.models.Chat
 import canoe.syntax._
-import cats.effect.Sync
 import cats.effect.concurrent.Ref
+import cats.effect.{Sync, Timer}
 import cats.implicits._
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.encryfoundation.tg.config.BotConfig
 import org.encryfoundation.tg.services.Explorer
+
+import scala.concurrent.duration._
 
 object scenarios {
 
@@ -28,24 +30,28 @@ object scenarios {
     }.mkString("\n ")))
   } yield ()
 
-  def startNodeMonitoring[F[_]: TelegramClient: Sync](explorer: Explorer[F],
-                                                      config: BotConfig,
-                                                      prevRes: Ref[F, Map[String, Boolean]]) = for {
+  def startNodeMonitoring[F[_]: TelegramClient: Sync: Timer](explorer: Explorer[F],
+                                                             config: BotConfig,
+                                                             prevRes: Ref[F, Map[String, Boolean]]) = for {
     chat <- Scenario.expect(command("startmonitoring").chat)
     _ <- Scenario.eval(recurMonitoring(explorer, config, prevRes, chat))
   } yield ()
 
-  def recurMonitoring[F[_]: TelegramClient: Sync](explorer: Explorer[F],
+  def recurMonitoring[F[_]: TelegramClient: Sync: Timer](explorer: Explorer[F],
                                                   config: BotConfig,
                                                   prevRes: Ref[F, Map[String, Boolean]],
                                                   chat: Chat): F[Unit] = for {
     prevMap <- prevRes.get
     nodesStatus <- explorer.nodesStatus
     _  <- nodesStatus.traverse { case (isActive, ip) =>
-      if (prevMap.get(ip).get != isActive) {
-        chat.send(s"Node $ip die :((((") >> prevRes.update(_.updated(ip, isActive))
-      } else ().pure[F]
+      if (prevMap(ip) != isActive && prevMap(ip)) {
+        chat.send(s"Node $ip die :((((") >> prevRes.update(map => map + (ip -> isActive))
+      } else if (prevMap(ip) != isActive && !prevMap(ip)) {
+        chat.send(s"Node $ip alive :)))") >> prevRes.update(map => map + (ip -> isActive))
+      } else {
+        ().pure[F]
+      }
     }
-    _ <- recurMonitoring(explorer, config, prevRes, chat)
+    _ <- Timer[F].sleep(5 seconds) >> recurMonitoring(explorer, config, prevRes, chat)
   } yield ()
 }

@@ -24,7 +24,7 @@ object BotApp extends IOApp {
           case (tgClient, config, explorer) =>
             implicit val client = tgClient
             val bot = Bot.polling[IO]
-            Stream.eval(Ref.of[IO, Map[String, Boolean]](config.nodes.nodes.map(ip => ip.toString() -> true).toMap)).flatMap { map =>
+            Stream.eval(Ref.of[IO, Map[String, Boolean]](config.nodes.nodes.map(ip => ip.toString() -> false).toMap)).flatMap { map =>
               bot.follow(
                 scenarios.nodeStatusMonitoring(explorer, config),
                 scenarios.chainMonitoring(explorer, config),
