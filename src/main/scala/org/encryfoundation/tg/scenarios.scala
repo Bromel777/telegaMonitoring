@@ -71,7 +71,7 @@ object scenarios {
         ().pure[F]
       }
     }
-    _ <- Timer[F].sleep(5 seconds) >> recurMonitoring(explorer, config, prevRes, chat)
+    _ <- Timer[F].sleep(15 seconds) >> recurMonitoring(explorer, config, prevRes, chat)
   } yield ()
 
   def registerUser[F[_]: TelegramClient: Sync](userService: UserService[F]) = for {
