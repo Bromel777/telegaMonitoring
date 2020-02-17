@@ -48,7 +48,7 @@ object BotApp extends IOApp {
     tgClient <- TelegramClient.global[F](config.tg.token)
     blazeClient <- BlazeClientBuilder[F](global).resource
     explorer <- Explorer[F](blazeClient, config)
-    db <- Database[F](new File("/Users/aleksandr/IdeaProjects/telegaMonitoring/db/"))
+    db <- Database[F](new File("./db/"))
     repo <- Resource.liftF(UserRepository[F](db))
     userService <- Resource.liftF(UserService[F](repo))
   } yield {
