@@ -40,7 +40,8 @@ libraryDependencies ++= Seq(
   "co.fs2" %% "fs2-io" % "2.1.0",
   "io.circe" %% "circe-generic" % "0.11.2",
   "org.augustjune" %% "canoe" % "0.4.1",
-  "com.github.cb372" %% "cats-retry" % "1.1.0"
+  "com.github.cb372" %% "cats-retry" % "1.1.0",
+  "ru.tinkoff" %% "tofu" % "0.7.1"
 ) ++ fs2
 
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
