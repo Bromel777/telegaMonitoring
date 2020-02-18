@@ -1,7 +1,6 @@
 package org.encryfoundation.tg
 
 import java.io.File
-
 import canoe.api._
 import cats.Applicative
 import cats.effect.concurrent.Ref
@@ -14,6 +13,8 @@ import org.encryfoundation.tg.config.BotConfig
 import org.encryfoundation.tg.db.Database
 import org.encryfoundation.tg.repositories.UserRepository
 import org.encryfoundation.tg.services.{AuthService, Explorer, UserService}
+import org.encryfoundation.tg.commands.AuthCommands._
+import org.encryfoundation.tg.commands.NonAuthCommands._
 import org.http4s.client.blaze.BlazeClientBuilder
 import retry.Sleep
 
@@ -30,12 +31,12 @@ object BotApp extends IOApp {
             Stream.eval(Logger[IO].info("Bot started!")) >>
             Stream.eval(Ref.of[IO, Map[String, Boolean]](config.nodes.nodes.map(ip => ip.toString() -> false).toMap)).flatMap { map =>
               val scenarious = List(
-                scenarios.nodeStatusMonitoring(explorer, config, userRepo, authService),
-                scenarios.chainMonitoring(explorer, config, authService),
-                scenarios.startNodeMonitoring(explorer, config, map, authService),
-                scenarios.registerUser(authService, userService),
-                scenarios.logoutPipeline(authService, userService),
-                scenarios.sendInfo(userService)
+                nodeStatusMonitoring(explorer, config, userRepo, authService),
+                chainMonitoring(explorer, config, authService),
+                startNodeMonitoring(explorer, config, map, authService),
+                registerUser(authService, userService),
+                logoutPipeline(authService, userService),
+                sendInfo(userService)
               ).map(_.scenario)
               bot.follow(scenarious: _*)
             }
