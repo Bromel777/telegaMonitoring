@@ -12,21 +12,24 @@ import tofu.syntax.raise._
 trait UserService[F[_]] {
 
   def registerUser(chat: Chat, pass: String): F[Unit]
-  def verifyUser(chat: Chat): F[Unit]
+  def isRegistered(chat: Chat): F[Boolean]
   def checkPossibilityToRegister(chat: Chat): F[Unit]
+  def logout(chat: Chat): F[Boolean]
 }
 
 object UserService {
 
   private final case class Live[F[_]: Monad: Raise[*[_], BotError]](repo: UserRepository[F]) extends UserService[F] {
     override def registerUser(chat: Chat, pass: String): F[Unit] =
-      repo.registerUser(pass, chat.id)
+      repo.registerUser(pass, chat)
 
-    override def verifyUser(chat: Chat): F[Unit] =
-      repo.checkUser(chat.id).verified(_ == true)(NotAuthUserError(chat)).map(_ => ())
+    override def isRegistered(chat: Chat): F[Boolean] =
+      repo.isAuth(chat).verified(_ == true)(NotAuthUserError(chat))
 
     override def checkPossibilityToRegister(chat: Chat): F[Unit] =
-      repo.checkUser(chat.id).verified(_ == false)(DuplicateAuth(chat)).map(_ => ())
+      repo.isAuth(chat).verified(_ == false)(DuplicateAuth(chat)).map( _ => ())
+
+    override def logout(chat: Chat): F[Boolean] = repo.logoutUser(chat)
   }
 
   def apply[F[_]: Sync: Raise[*[_], NotAuthUserError]](repository: UserRepository[F]): F[UserService[F]] = Sync[F].delay(Live[F](repository))

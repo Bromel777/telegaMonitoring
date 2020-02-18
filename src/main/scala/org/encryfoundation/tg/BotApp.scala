@@ -33,7 +33,8 @@ object BotApp extends IOApp {
                 scenarios.nodeStatusMonitoring(explorer, config, userRepo, userService),
                 scenarios.chainMonitoring(explorer, config, userService),
                 scenarios.startNodeMonitoring(explorer, config, map, userService).stopOn(command("cancel").isDefinedAt),
-                scenarios.registerUser(userService)
+                scenarios.registerUser(userService),
+                scenarios.logoutPipeline(userService)
               ).map(scenarios.handleErrInScenario)
               bot.follow(scenarious: _*)
             }

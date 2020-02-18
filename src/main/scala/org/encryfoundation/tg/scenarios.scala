@@ -29,7 +29,7 @@ object scenarios {
                                                        userRepository: UserRepository[F],
                                                        userService: UserService[F]) = for {
     chat <- Scenario.expect(command("nodestatus").chat)
-    _  <- Scenario.eval(userService.verifyUser(chat))
+    _  <- Scenario.eval(userService.isRegistered(chat))
     nodeInfo <- Scenario.eval(explorer.getInfo)
     _ <- Scenario.eval(chat.send(nodeInfo.asJson.toString()))
   } yield ()
@@ -38,7 +38,7 @@ object scenarios {
                                             config: BotConfig,
                                             userService: UserService[F]) = for {
     chat <- Scenario.expect(command("chainstatus").chat)
-    _  <- Scenario.eval(userService.verifyUser(chat))
+    _  <- Scenario.eval(userService.isRegistered(chat))
     nodesStatus <- Scenario.eval(explorer.nodesStatus)
     _ <- Scenario.eval(chat.send(nodesStatus.map { case (isActive, ip) =>
         val status = if (isActive) '\u2705' else '\u274C'
@@ -52,7 +52,7 @@ object scenarios {
                                                              prevRes: Ref[F, Map[String, Boolean]],
                                                              userService: UserService[F]) = for {
     chat <- Scenario.expect(command("startmonitoring").chat)
-    _  <- Scenario.eval(userService.verifyUser(chat))
+    _  <- Scenario.eval(userService.isRegistered(chat))
     _ <- Scenario.eval(recurMonitoring(explorer, config, prevRes, chat))
   } yield ()
 
@@ -83,5 +83,10 @@ object scenarios {
     pass <- Scenario.expect(text)
     _ <- Scenario.eval(userService.registerUser(chat, pass))
     _ <- Scenario.eval(chat.send(s"Hello, $username"))
+  } yield ()
+
+  def logoutPipeline[F[_]: TelegramClient: Sync](userService: UserService[F]) = for {
+    chat <- Scenario.expect(command("logout").chat)
+    _ <- Scenario.eval(userService.logout(chat))
   } yield ()
 }
