@@ -3,58 +3,58 @@ package org.encryfoundation.tg
 import canoe.api.{Scenario, TelegramClient, _}
 import canoe.models.Chat
 import canoe.syntax._
-import cats.Applicative
+import cats.Monad
 import cats.effect.concurrent.Ref
 import cats.effect.{Sync, Timer}
 import cats.implicits._
 import io.circe.generic.auto._
 import io.circe.syntax._
+import org.encryfoundation.tg.commands.Command
 import org.encryfoundation.tg.config.BotConfig
-import org.encryfoundation.tg.data.Errors.BotError
 import org.encryfoundation.tg.repositories.UserRepository
-import org.encryfoundation.tg.services.{Explorer, AuthService}
+import org.encryfoundation.tg.services.{AuthService, Explorer, UserService}
 
 import scala.concurrent.duration._
 
 object scenarios {
 
-  def handleErrInScenario[F[_]: TelegramClient: Applicative]: Scenario[F, Unit] => Scenario[F, Unit] = unhandled =>
-    unhandled.handleErrorWith {
-      case botError: BotError => Scenario.eval(botError.chat.send(botError.msgToChat.toString)) >> Scenario.eval(().pure[F])
-      case _: Throwable => Scenario.eval(().pure[F])
-    }
-
   def nodeStatusMonitoring[F[_]: TelegramClient: Sync](explorer: Explorer[F],
                                                        config: BotConfig,
                                                        userRepository: UserRepository[F],
-                                                       userService: AuthService[F]) = for {
-    chat <- Scenario.expect(command("nodestatus").chat)
-    _  <- Scenario.eval(userService.isRegistered(chat))
-    nodeInfo <- Scenario.eval(explorer.getInfo)
-    _ <- Scenario.eval(chat.send(nodeInfo.asJson.toString()))
-  } yield ()
+                                                       userService: AuthService[F]): Command[F] =
+    Command[F]("nodestatus")(chat =>
+      for {
+        _  <- Scenario.eval(userService.isRegistered(chat))
+        nodeInfo <- Scenario.eval(explorer.getInfo)
+        _ <- Scenario.eval(chat.send(nodeInfo.asJson.toString()))
+      } yield ()
+    )
 
-  def chainMonitoring[F[_]: TelegramClient](explorer: Explorer[F],
+
+  def chainMonitoring[F[_]: TelegramClient: Monad](explorer: Explorer[F],
                                             config: BotConfig,
-                                            userService: AuthService[F]) = for {
-    chat <- Scenario.expect(command("chainstatus").chat)
-    _  <- Scenario.eval(userService.isRegistered(chat))
-    nodesStatus <- Scenario.eval(explorer.nodesStatus)
-    _ <- Scenario.eval(chat.send(nodesStatus.map { case (isActive, ip) =>
-        val status = if (isActive) '\u2705' else '\u274C'
-        List(status, ip).mkString(" ")
-    }.mkString("\n ")))
-  } yield ()
-
+                                            userService: AuthService[F]) =
+    Command[F]("chainstatus")(chat =>
+      for {
+        _ <- Scenario.eval(userService.isRegistered(chat))
+        nodesStatus <- Scenario.eval(explorer.nodesStatus)
+        _ <- Scenario.eval(chat.send(nodesStatus.map { case (isActive, ip) =>
+          val status = if (isActive) '\u2705' else '\u274C'
+          List(status, ip).mkString(" ")
+        }.mkString("\n")))
+      } yield ()
+    )
 
   def startNodeMonitoring[F[_]: TelegramClient: Sync: Timer](explorer: Explorer[F],
                                                              config: BotConfig,
                                                              prevRes: Ref[F, Map[String, Boolean]],
-                                                             userService: AuthService[F]) = for {
-    chat <- Scenario.expect(command("startmonitoring").chat)
-    _  <- Scenario.eval(userService.isRegistered(chat))
-    _ <- Scenario.eval(recurMonitoring(explorer, config, prevRes, chat))
-  } yield ()
+                                                             userService: AuthService[F]) =
+    Command[F]("startmonitoring")(chat =>
+      for {
+        _  <- Scenario.eval(userService.isRegistered(chat))
+        _ <- Scenario.eval(recurMonitoring(explorer, config, prevRes, chat))
+      } yield ()
+    )
 
   def recurMonitoring[F[_]: TelegramClient: Sync: Timer](explorer: Explorer[F],
                                                          config: BotConfig,
@@ -74,19 +74,34 @@ object scenarios {
     _ <- Timer[F].sleep(15 seconds) >> recurMonitoring(explorer, config, prevRes, chat)
   } yield ()
 
-  def registerUser[F[_]: TelegramClient: Sync](userService: AuthService[F]) = for {
-    chat <- Scenario.expect(command("register").chat)
-    _ <- Scenario.eval(userService.checkPossibilityToRegister(chat))
-    _ <- Scenario.eval(chat.send("Enter username"))
-    username <- Scenario.expect(text)
-    _ <- Scenario.eval(chat.send("Enter pass"))
-    pass <- Scenario.expect(text)
-    _ <- Scenario.eval(userService.registerUser(chat, pass))
-    _ <- Scenario.eval(chat.send(s"Hello, $username"))
-  } yield ()
+  def registerUser[F[_]: TelegramClient: Sync](authService: AuthService[F],
+                                               userService: UserService[F]) =
+    Command[F]("register")(chat =>
+      for {
+        _ <- Scenario.eval(authService.checkPossibilityToRegister(chat))
+        _ <- Scenario.eval(chat.send("Enter username"))
+        username <- Scenario.expect(text)
+        _ <- Scenario.eval(chat.send("Enter pass"))
+        pass <- Scenario.expect(text)
+        _ <- Scenario.eval(authService.registerUser(chat, pass))
+        _ <- Scenario.eval(userService.updateLogin(username))
+        _ <- Scenario.eval(chat.send(s"Hello, $username"))
+      } yield ()
+    )
 
-  def logoutPipeline[F[_]: TelegramClient: Sync](userService: AuthService[F]) = for {
-    chat <- Scenario.expect(command("logout").chat)
-    _ <- Scenario.eval(userService.logout(chat))
-  } yield ()
+  def logoutPipeline[F[_]: TelegramClient: Sync](authService: AuthService[F], userService: UserService[F]) =
+    Command[F]("logout")(chat =>
+      for {
+        _ <- Scenario.eval(authService.logout(chat))
+        _ <- Scenario.eval(userService.updateLogin("Unknown bird"))
+      } yield ()
+    )
+
+  def sendInfo[F[_]: TelegramClient: Sync](userService: UserService[F]) =
+    Command[F]("info")(chat =>
+      for {
+        login <- Scenario.eval(userService.getLogin)
+        _ <- Scenario.eval(chat.send(s"You login: $login"))
+      } yield ()
+    )
 }
