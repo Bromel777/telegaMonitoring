@@ -22,39 +22,36 @@ object scenarios {
                                                        config: BotConfig,
                                                        userRepository: UserRepository[F],
                                                        userService: AuthService[F]): Command[F] =
-    Command[F]("nodestatus")(chat =>
+    Command.makeAuth("nodestatus")(chat =>
       for {
-        _  <- Scenario.eval(userService.isRegistered(chat))
         nodeInfo <- Scenario.eval(explorer.getInfo)
         _ <- Scenario.eval(chat.send(nodeInfo.asJson.toString()))
       } yield ()
-    )
+    )(userService)
 
 
   def chainMonitoring[F[_]: TelegramClient: Monad](explorer: Explorer[F],
-                                            config: BotConfig,
-                                            userService: AuthService[F]) =
-    Command[F]("chainstatus")(chat =>
+                                                   config: BotConfig,
+                                                   authService: AuthService[F]) =
+    Command.makeAuth("chainstatus")(chat =>
       for {
-        _ <- Scenario.eval(userService.isRegistered(chat))
         nodesStatus <- Scenario.eval(explorer.nodesStatus)
         _ <- Scenario.eval(chat.send(nodesStatus.map { case (isActive, ip) =>
           val status = if (isActive) '\u2705' else '\u274C'
           List(status, ip).mkString(" ")
         }.mkString("\n")))
       } yield ()
-    )
+    )(authService)
 
   def startNodeMonitoring[F[_]: TelegramClient: Sync: Timer](explorer: Explorer[F],
                                                              config: BotConfig,
                                                              prevRes: Ref[F, Map[String, Boolean]],
-                                                             userService: AuthService[F]) =
-    Command[F]("startmonitoring")(chat =>
+                                                             authService: AuthService[F]) =
+    Command.makeAuth("startmonitoring")(chat =>
       for {
-        _  <- Scenario.eval(userService.isRegistered(chat))
         _ <- Scenario.eval(recurMonitoring(explorer, config, prevRes, chat))
       } yield ()
-    )
+    )(authService)
 
   def recurMonitoring[F[_]: TelegramClient: Sync: Timer](explorer: Explorer[F],
                                                          config: BotConfig,
@@ -76,7 +73,7 @@ object scenarios {
 
   def registerUser[F[_]: TelegramClient: Sync](authService: AuthService[F],
                                                userService: UserService[F]) =
-    Command[F]("register")(chat =>
+    Command.make("register")(chat =>
       for {
         _ <- Scenario.eval(authService.checkPossibilityToRegister(chat))
         _ <- Scenario.eval(chat.send("Enter username"))
@@ -90,15 +87,15 @@ object scenarios {
     )
 
   def logoutPipeline[F[_]: TelegramClient: Sync](authService: AuthService[F], userService: UserService[F]) =
-    Command[F]("logout")(chat =>
+    Command.makeAuth("logout")(chat =>
       for {
         _ <- Scenario.eval(authService.logout(chat))
         _ <- Scenario.eval(userService.updateLogin("Unknown bird"))
       } yield ()
-    )
+    )(authService)
 
   def sendInfo[F[_]: TelegramClient: Sync](userService: UserService[F]) =
-    Command[F]("info")(chat =>
+    Command.make("info")(chat =>
       for {
         login <- Scenario.eval(userService.getLogin)
         _ <- Scenario.eval(chat.send(s"You login: $login"))
