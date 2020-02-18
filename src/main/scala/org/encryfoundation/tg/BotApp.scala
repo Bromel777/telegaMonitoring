@@ -14,7 +14,7 @@ import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import org.encryfoundation.tg.config.BotConfig
 import org.encryfoundation.tg.db.Database
 import org.encryfoundation.tg.repositories.UserRepository
-import org.encryfoundation.tg.services.{Explorer, UserService}
+import org.encryfoundation.tg.services.{Explorer, AuthService}
 import org.http4s.client.blaze.BlazeClientBuilder
 import retry.Sleep
 
@@ -51,7 +51,7 @@ object BotApp extends IOApp {
     explorer <- Explorer[F](blazeClient, config)
     db <- Database[F](new File("./db/"))
     repo <- Resource.liftF(UserRepository[F](db))
-    userService <- Resource.liftF(UserService[F](repo))
+    userService <- Resource.liftF(AuthService[F](repo))
   } yield {
     (tgClient, config,  explorer, repo, userService)
   }

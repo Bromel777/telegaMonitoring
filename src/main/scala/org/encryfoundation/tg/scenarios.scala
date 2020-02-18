@@ -12,7 +12,7 @@ import io.circe.syntax._
 import org.encryfoundation.tg.config.BotConfig
 import org.encryfoundation.tg.data.Errors.BotError
 import org.encryfoundation.tg.repositories.UserRepository
-import org.encryfoundation.tg.services.{Explorer, UserService}
+import org.encryfoundation.tg.services.{Explorer, AuthService}
 
 import scala.concurrent.duration._
 
@@ -27,7 +27,7 @@ object scenarios {
   def nodeStatusMonitoring[F[_]: TelegramClient: Sync](explorer: Explorer[F],
                                                        config: BotConfig,
                                                        userRepository: UserRepository[F],
-                                                       userService: UserService[F]) = for {
+                                                       userService: AuthService[F]) = for {
     chat <- Scenario.expect(command("nodestatus").chat)
     _  <- Scenario.eval(userService.isRegistered(chat))
     nodeInfo <- Scenario.eval(explorer.getInfo)
@@ -36,7 +36,7 @@ object scenarios {
 
   def chainMonitoring[F[_]: TelegramClient](explorer: Explorer[F],
                                             config: BotConfig,
-                                            userService: UserService[F]) = for {
+                                            userService: AuthService[F]) = for {
     chat <- Scenario.expect(command("chainstatus").chat)
     _  <- Scenario.eval(userService.isRegistered(chat))
     nodesStatus <- Scenario.eval(explorer.nodesStatus)
@@ -50,7 +50,7 @@ object scenarios {
   def startNodeMonitoring[F[_]: TelegramClient: Sync: Timer](explorer: Explorer[F],
                                                              config: BotConfig,
                                                              prevRes: Ref[F, Map[String, Boolean]],
-                                                             userService: UserService[F]) = for {
+                                                             userService: AuthService[F]) = for {
     chat <- Scenario.expect(command("startmonitoring").chat)
     _  <- Scenario.eval(userService.isRegistered(chat))
     _ <- Scenario.eval(recurMonitoring(explorer, config, prevRes, chat))
@@ -74,7 +74,7 @@ object scenarios {
     _ <- Timer[F].sleep(15 seconds) >> recurMonitoring(explorer, config, prevRes, chat)
   } yield ()
 
-  def registerUser[F[_]: TelegramClient: Sync](userService: UserService[F]) = for {
+  def registerUser[F[_]: TelegramClient: Sync](userService: AuthService[F]) = for {
     chat <- Scenario.expect(command("register").chat)
     _ <- Scenario.eval(userService.checkPossibilityToRegister(chat))
     _ <- Scenario.eval(chat.send("Enter username"))
@@ -85,7 +85,7 @@ object scenarios {
     _ <- Scenario.eval(chat.send(s"Hello, $username"))
   } yield ()
 
-  def logoutPipeline[F[_]: TelegramClient: Sync](userService: UserService[F]) = for {
+  def logoutPipeline[F[_]: TelegramClient: Sync](userService: AuthService[F]) = for {
     chat <- Scenario.expect(command("logout").chat)
     _ <- Scenario.eval(userService.logout(chat))
   } yield ()
