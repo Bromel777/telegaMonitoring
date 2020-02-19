@@ -10,6 +10,7 @@ import org.encryfoundation.tg.services.AuthService
 
 trait Command[F[_]] {
   val invokeName: String
+  val isAuth: Boolean
   def scenario: Scenario[F, Unit]
 }
 
@@ -21,13 +22,18 @@ object Command {
       case _: Throwable => Scenario.eval(().pure[F])
     }
 
-  def make[F[_]: TelegramClient: Monad](name: String)(body: Chat => Scenario[F, Unit]): Command[F] = new Command[F] {
+  private def createCommand[F[_]: TelegramClient: Monad](name: String)(body: Chat => Scenario[F, Unit])(auth: Boolean): Command[F] = new Command[F] {
     override val invokeName: String = name
+    override val isAuth: Boolean = auth
     override val scenario: Scenario[F, Unit] = Scenario.expect(command(name).chat).flatMap(chat =>
       handleErrInScenario(body(chat), chat)
     )
   }
 
+  def make[F[_]: TelegramClient: Monad](name: String)(body: Chat => Scenario[F, Unit]): Command[F] =
+    createCommand(name)(body)(auth = false)
+
+
   def makeAuth[F[_]: TelegramClient: Monad](name: String)(body: Chat => Scenario[F, Unit])(authService: AuthService[F]): Command[F] =
-    make(name)(chat => Scenario.eval(authService.isRegistered(chat)) >> body(chat))
+    createCommand(name)(chat => Scenario.eval(authService.isRegistered(chat)) >> body(chat))(auth = true)
 }

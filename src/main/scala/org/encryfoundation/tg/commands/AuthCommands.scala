@@ -3,14 +3,16 @@ package org.encryfoundation.tg.commands
 import canoe.api.{Scenario, TelegramClient, _}
 import canoe.models.Chat
 import canoe.syntax._
+import cats.Monad
+import cats.effect.concurrent.Ref
+import cats.effect.{Sync, Timer}
+import cats.implicits._
 import io.circe.generic.auto._
 import io.circe.syntax._
-import cats.Monad
-import cats.effect.{Sync, Timer}
-import cats.effect.concurrent.Ref
 import org.encryfoundation.tg.config.BotConfig
-import org.encryfoundation.tg.repositories.UserRepository
 import org.encryfoundation.tg.services.{AuthService, Explorer, UserService}
+
+import scala.concurrent.duration._
 
 object AuthCommands {
 
@@ -23,8 +25,6 @@ object AuthCommands {
     )(authService)
 
   def nodeStatusMonitoring[F[_]: TelegramClient: Sync](explorer: Explorer[F],
-                                                       config: BotConfig,
-                                                       userRepository: UserRepository[F],
                                                        userService: AuthService[F]): Command[F] =
     Command.makeAuth("nodestatus")(chat =>
       for {
@@ -35,7 +35,6 @@ object AuthCommands {
 
 
   def chainMonitoring[F[_]: TelegramClient: Monad](explorer: Explorer[F],
-                                                   config: BotConfig,
                                                    authService: AuthService[F]) =
     Command.makeAuth("chainstatus")(chat =>
       for {
