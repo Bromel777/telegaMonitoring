@@ -28,7 +28,7 @@ object NonAuthCommands {
         username <- Scenario.expect(text)
         _ <- Scenario.eval(chat.send("Enter pass"))
         pass <- Scenario.expect(text)
-        _ <- Scenario.eval(authService.registerUser(chat, pass))
+        _ <- Scenario.eval(authService.registerUser(chat, username, pass))
         _ <- Scenario.eval(userService.updateLogin(username))
         _ <- Scenario.eval(chat.send(s"Hello, $username"))
       } yield ()
@@ -42,10 +42,22 @@ object NonAuthCommands {
       } yield ()
     )
 
+  def login[F[_]: TelegramClient: Sync](authService: AuthService[F], userService: UserService[F]) =
+    Command.make("login")( chat =>
+      for {
+        _ <- Scenario.eval(chat.send("Enter login"))
+        username <- Scenario.expect(text)
+        _ <- Scenario.eval(chat.send("Enter password"))
+        pass <- Scenario.expect(text)
+        _ <- Scenario.eval(authService.login(chat, username, pass))
+        _ <- Scenario.eval(userService.updateLogin(username))
+      } yield ()
+    )
+
   def menu[F[_]: TelegramClient: Sync](authService: AuthService[F], commands: List[Command[F]]) =
     Command.make("menu")(chat =>
       for {
-        isAuth <- Scenario.eval(authService.isAuth(chat))
+        isAuth <- Scenario.eval(authService.isAuth(chat).handleError(_ => false))
         commandsForMenu <- Scenario.eval {
           if (isAuth) commands.pure[F] else commands.filter(_.isAuth == false).pure[F]
         }
