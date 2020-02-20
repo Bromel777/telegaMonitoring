@@ -12,7 +12,7 @@ import tofu.syntax.raise._
 trait AuthService[F[_]] {
 
   def registerUser(chat: Chat, pass: String): F[Unit]
-  def isRegistered(chat: Chat): F[Boolean]
+  def isAuth(chat: Chat): F[Boolean]
   def checkPossibilityToRegister(chat: Chat): F[Unit]
   def logout(chat: Chat): F[Boolean]
 }
@@ -23,11 +23,11 @@ object AuthService {
     override def registerUser(chat: Chat, pass: String): F[Unit] =
       repo.registerUser(pass, chat)
 
-    override def isRegistered(chat: Chat): F[Boolean] =
+    override def isAuth(chat: Chat): F[Boolean] =
       repo.isAuth(chat).verified(_ == true)(NotAuthUserError(chat))
 
     override def checkPossibilityToRegister(chat: Chat): F[Unit] =
-      repo.isAuth(chat).verified(_ == false)(DuplicateAuth(chat)).map( _ => ())
+      repo.isRegistered(chat).verified(_ == false)(DuplicateAuth(chat)).map( _ => ())
 
     override def logout(chat: Chat): F[Boolean] = repo.logoutUser(chat)
   }

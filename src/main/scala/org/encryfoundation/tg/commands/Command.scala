@@ -35,5 +35,5 @@ object Command {
 
 
   def makeAuth[F[_]: TelegramClient: Monad](name: String)(body: Chat => Scenario[F, Unit])(authService: AuthService[F]): Command[F] =
-    createCommand(name)(chat => Scenario.eval(authService.isRegistered(chat)) >> body(chat))(auth = true)
+    createCommand(name)(chat => Scenario.eval(authService.isAuth(chat)) >> body(chat))(auth = true)
 }

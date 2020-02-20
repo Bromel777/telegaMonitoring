@@ -16,6 +16,7 @@ trait UserRepository[F[_]] {
   def registerUser(pass: String, chat: Chat): F[Unit]
   def checkPass(pass: String, chat: Chat): F[Boolean]
   def isAuth(chat: Chat): F[Boolean]
+  def isRegistered(chat: Chat): F[Boolean]
   def logoutUser(chat: Chat): F[Boolean]
 }
 
@@ -37,6 +38,9 @@ object UserRepository {
     override def logoutUser(chat: Chat): F[Boolean] = (for {
       prevUserInfo <- OptionT(db.get(Longs.toByteArray(chat.id)).verified(_.nonEmpty)(NotAuthUserError(chat)))
     } yield db.put(Longs.toByteArray(chat.id), (0: Byte) +: prevUserInfo.drop(1))).fold(false)(_ => true)
+
+    override def isRegistered(chat: Chat): F[Boolean] = OptionT(db.get(Longs.toByteArray(chat.id)))
+      .fold(false)(elem => elem != null)
   }
 
   def apply[F[_]: Monad: Raise[*[_], BotError]](db: Database[F]): F[UserRepository[F]] = Monad[F].pure(Live[F](db))

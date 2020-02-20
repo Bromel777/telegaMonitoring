@@ -58,9 +58,9 @@ object BotApp extends IOApp {
       registerUser(authService, userService),
       logoutPipeline(authService, userService),
       sendInfo(userService),
-      menu(userService)
     ))
+    menu <- Resource.pure[F, Command[F]](menu(authService, commands))
   } yield {
-    (tgClient, config,  explorer, repo, authService, userService, commands)
+    (tgClient, config,  explorer, repo, authService, userService, commands :+ menu)
   }
 }

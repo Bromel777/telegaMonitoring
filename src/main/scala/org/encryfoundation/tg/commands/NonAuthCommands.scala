@@ -14,6 +14,10 @@ object NonAuthCommands {
     keyboard = List(List(KeyboardButton.text("hello"))), oneTimeKeyboard = true.some
   )
 
+  def commandsMenu[F[_]](commands: List[Command[F]]) = ReplyKeyboardMarkup(
+    keyboard = List(commands.map(command => KeyboardButton.text(s"/${command.invokeName}"))), oneTimeKeyboard = true.some
+  )
+
 
   def registerUser[F[_]: TelegramClient: Sync](authService: AuthService[F],
                                                userService: UserService[F]) =
@@ -38,11 +42,14 @@ object NonAuthCommands {
       } yield ()
     )
 
-  def menu[F[_]: TelegramClient: Sync](userService: UserService[F]) =
-      Command.make("menu")(chat =>
+  def menu[F[_]: TelegramClient: Sync](authService: AuthService[F], commands: List[Command[F]]) =
+    Command.make("menu")(chat =>
       for {
-        login <- Scenario.eval(userService.getLogin)
-        _ <- Scenario.eval(chat.send(s"You login: $login", keyboard = Reply(dummyKeyBoard)))
+        isAuth <- Scenario.eval(authService.isAuth(chat))
+        commandsForMenu <- Scenario.eval {
+          if (isAuth) commands.pure[F] else commands.filter(_.isAuth == false).pure[F]
+        }
+        _ <- Scenario.eval(chat.send(s"Accepatable menu", keyboard = Reply(commandsMenu(commandsForMenu))))
       } yield ()
     )
 }
