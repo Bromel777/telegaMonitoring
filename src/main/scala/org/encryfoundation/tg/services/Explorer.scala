@@ -22,6 +22,7 @@ trait Explorer[F[_]] {
 
   def getInfo: F[InfoRoute]
   def nodesStatus: F[List[(Boolean, String)]]
+  def makeGetRequest[T](req: Request[F])(implicit decoder: Decoder[T]): F[T]
 }
 
 object Explorer {
@@ -45,7 +46,7 @@ object Explorer {
         .handleError(_ => false -> nodeIp.toString())
     }
 
-    private def makeGetRequest[T](req: Request[F])(implicit decoder: Decoder[T]): F[T] =
+    override def makeGetRequest[T](req: Request[F])(implicit decoder: Decoder[T]): F[T] =
       retryingOnAllErrors[T](
         policy = RetryPolicies.limitRetries[F](10),
         onError = logExplorerError
