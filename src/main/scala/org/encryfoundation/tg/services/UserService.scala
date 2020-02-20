@@ -1,36 +1,33 @@
 package org.encryfoundation.tg.services
 
-import canoe.models.Chat
 import cats.Monad
 import cats.effect.Sync
-import org.encryfoundation.tg.data.Errors.{BotError, DuplicateAuth, NotAuthUserError}
-import org.encryfoundation.tg.repositories.UserRepository
-import tofu._
-import tofu.syntax.monadic._
-import tofu.syntax.raise._
+import cats.effect.concurrent.Ref
+import cats.implicits._
 
 trait UserService[F[_]] {
-
-  def registerUser(chat: Chat, pass: String): F[Unit]
-  def isRegistered(chat: Chat): F[Boolean]
-  def checkPossibilityToRegister(chat: Chat): F[Unit]
-  def logout(chat: Chat): F[Boolean]
+  def getLogin: F[String]
+  def getMenu: F[List[(String, String)]]
+  def updateLogin(newLogin: String): F[Unit]
+  def updateMenu(newMenu: List[(String, String)]): F[Unit]
 }
 
 object UserService {
 
-  private final case class Live[F[_]: Monad: Raise[*[_], BotError]](repo: UserRepository[F]) extends UserService[F] {
-    override def registerUser(chat: Chat, pass: String): F[Unit] =
-      repo.registerUser(pass, chat)
+  final private case class Live[F[_]: Monad](login: Ref[F, String],
+                                             menus: Ref[F, List[(String, String)]]) extends UserService[F] {
 
-    override def isRegistered(chat: Chat): F[Boolean] =
-      repo.isAuth(chat).verified(_ == true)(NotAuthUserError(chat))
+    override def getLogin: F[String] = login.get
 
-    override def checkPossibilityToRegister(chat: Chat): F[Unit] =
-      repo.isAuth(chat).verified(_ == false)(DuplicateAuth(chat)).map( _ => ())
+    override def getMenu: F[List[(String, String)]] = menus.get
 
-    override def logout(chat: Chat): F[Boolean] = repo.logoutUser(chat)
+    override def updateLogin(newLogin: String): F[Unit] = login.set(newLogin)
+
+    override def updateMenu(newMenu: List[(String, String)]): F[Unit] = menus.set(newMenu)
   }
 
-  def apply[F[_]: Sync: Raise[*[_], NotAuthUserError]](repository: UserRepository[F]): F[UserService[F]] = Sync[F].delay(Live[F](repository))
+  def apply[F[_]: Sync](guestMenu: List[(String, String)]): F[UserService[F]] = for {
+    loginRef <- Ref.of[F, String]("Unknown alien")
+    menuRef <- Ref.of[F, List[(String, String)]](guestMenu)
+  } yield Live[F](loginRef, menuRef)
 }
