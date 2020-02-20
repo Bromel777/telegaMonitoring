@@ -15,6 +15,8 @@ import org.encryfoundation.tg.commands.Command
 import org.encryfoundation.tg.commands.NonAuthCommands._
 import org.encryfoundation.tg.config.BotConfig
 import org.encryfoundation.tg.db.Database
+import org.encryfoundation.tg.pipelines.chat._
+import org.encryfoundation.tg.pipelines.json.{HttpApiJsonParsePipe, IntJsonType, Schema}
 import org.encryfoundation.tg.repositories.UserRepository
 import org.encryfoundation.tg.services.{AuthService, Explorer, UserService}
 import org.http4s.client.blaze.BlazeClientBuilder
