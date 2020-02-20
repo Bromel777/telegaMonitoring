@@ -45,10 +45,11 @@ object NonAuthCommands {
   def login[F[_]: TelegramClient: Sync](authService: AuthService[F], userService: UserService[F]) =
     Command.make("login")( chat =>
       for {
-        _ <- Scenario.eval(authService.isRegistered(chat))
+        _ <- Scenario.eval(chat.send("Enter login"))
+        username <- Scenario.expect(text)
         _ <- Scenario.eval(chat.send("Enter password"))
         pass <- Scenario.expect(text)
-        username <- Scenario.eval(authService.login(chat, pass))
+        _ <- Scenario.eval(authService.login(chat, username, pass))
         _ <- Scenario.eval(userService.updateLogin(username))
       } yield ()
     )

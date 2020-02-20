@@ -16,11 +16,11 @@ import tofu.syntax.raise._
 
 trait UserRepository[F[_]] {
   def registerUser(login: String, pass: String, chat: Chat): F[Unit]
-  def checkPass(pass: String, chat: Chat): F[Boolean]
+  def checkPass(username: String, pass: String, chat: Chat): F[Boolean]
   def isAuth(chat: Chat): F[Boolean]
   def isRegistered(chat: Chat): F[Boolean]
   def logoutUser(chat: Chat): F[Boolean]
-  def login(chat: Chat, pass: String): F[String]
+  def login(chat: Chat, username: String, pass: String): F[Unit]
 }
 
 object UserRepository {
@@ -33,7 +33,8 @@ object UserRepository {
       db.put(key, value)
     }
 
-    override def checkPass(pass: String, chat: Chat): F[Boolean] = (for {
+    override def checkPass(username: String, pass: String, chat: Chat): F[Boolean] = (for {
+      _ <- OptionT(db.get(chatIdByLogin(username)).verified(_.nonEmpty)(NotAuthUserError(chat)))
       res <- OptionT(db.get(passByChatId(chat.id)))
     } yield (new String(res, StandardCharsets.UTF_8) == pass)).fold(false)(res => res)
 
@@ -47,11 +48,11 @@ object UserRepository {
     override def isRegistered(chat: Chat): F[Boolean] = OptionT(db.get(loginByChatIdKey(chat.id)))
       .fold(false)(elem => elem != null)
 
-    override def login(chat: Chat, pass: String): F[String] = for {
-      _ <- checkPass(pass, chat).verified(_ == true)(IncorrectPassword(chat))
+    override def login(chat: Chat, username: String, pass: String): F[Unit] = for {
+      _ <- checkPass(username, pass, chat).verified(_ == true)(IncorrectPassword(chat))
       _ <- db.put(chatIdAuthStatus(chat.id), Array(1: Byte))
-      login <- db.get(loginByChatIdKey(chat.id))
-    } yield new String(login.get, StandardCharsets.UTF_8)
+      _ <- db.get(loginByChatIdKey(chat.id))
+    } yield ()
   }
 
   def apply[F[_]: Monad: Raise[*[_], BotError]](db: Database[F]): F[UserRepository[F]] = Monad[F].pure(Live[F](db))

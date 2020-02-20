@@ -16,7 +16,7 @@ trait AuthService[F[_]] {
   def isRegistered(chat: Chat): F[Unit]
   def checkPossibilityToRegister(chat: Chat): F[Unit]
   def logout(chat: Chat): F[Boolean]
-  def login(chat: Chat, pass: String): F[String]
+  def login(chat: Chat, username: String, pass: String): F[Unit]
 }
 
 object AuthService {
@@ -33,7 +33,7 @@ object AuthService {
 
     override def logout(chat: Chat): F[Boolean] = repo.logoutUser(chat)
 
-    override def login(chat: Chat, pass: String): F[String] = repo.login(chat, pass)
+    override def login(chat: Chat, username: String, pass: String): F[Unit] = repo.login(chat, username, pass)
 
     override def isRegistered(chat: Chat): F[Unit] =
       repo.isRegistered(chat).verified(_ == true)(NotRegisteredChat(chat)).map( _ => ())
