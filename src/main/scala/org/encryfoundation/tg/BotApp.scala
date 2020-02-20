@@ -49,7 +49,7 @@ object BotApp extends IOApp {
     db <- Database[F](new File("./db/"))
     repo <- Resource.liftF(UserRepository[F](db))
     authService <- Resource.liftF(AuthService[F](repo))
-    userService <- Resource.liftF(UserService[F](List(("asd", "asd"))))
+    userService <- Resource.liftF(UserService[F](List()))
     map <- Resource.liftF(Ref.of[F, Map[String, Boolean]](config.nodes.nodes.map(ip => ip.toString() -> false).toMap))
     commands <- Resource.pure[F, List[Command[F]]](List(
       nodeStatusMonitoring(explorer, authService),
@@ -58,7 +58,7 @@ object BotApp extends IOApp {
       registerUser(authService, userService),
       logoutPipeline(authService, userService),
       sendInfo(userService),
-      login(authService)
+      login(authService, userService)
     ))
     menu <- Resource.pure[F, Command[F]](menu(authService, commands))
   } yield {

@@ -17,4 +17,7 @@ object Errors {
   case class IncorrectPassword(chat: Chat) extends BotError {
     override val msgToChat: String = "Password is incorrect!"
   }
+  case class NotRegisteredChat(chat: Chat) extends BotError {
+    override val msgToChat: String = "You are not registered in this chat!"
+  }
 }
