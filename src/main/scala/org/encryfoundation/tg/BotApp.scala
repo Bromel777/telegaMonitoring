@@ -58,6 +58,7 @@ object BotApp extends IOApp {
       registerUser(authService, userService),
       logoutPipeline(authService, userService),
       sendInfo(userService),
+      login(authService)
     ))
     menu <- Resource.pure[F, Command[F]](menu(authService, commands))
   } yield {

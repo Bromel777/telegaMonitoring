@@ -15,6 +15,7 @@ trait AuthService[F[_]] {
   def isAuth(chat: Chat): F[Boolean]
   def checkPossibilityToRegister(chat: Chat): F[Unit]
   def logout(chat: Chat): F[Boolean]
+  def login(chat: Chat, pass: String): F[Unit]
 }
 
 object AuthService {
@@ -30,6 +31,8 @@ object AuthService {
       repo.isRegistered(chat).verified(_ == false)(DuplicateAuth(chat)).map( _ => ())
 
     override def logout(chat: Chat): F[Boolean] = repo.logoutUser(chat)
+
+    override def login(chat: Chat, pass: String): F[Unit] = repo.login(chat, pass)
   }
 
   def apply[F[_]: Sync: Raise[*[_], NotAuthUserError]](repository: UserRepository[F]): F[AuthService[F]] = Sync[F].delay(Live[F](repository))

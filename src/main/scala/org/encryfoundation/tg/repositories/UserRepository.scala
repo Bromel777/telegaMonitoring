@@ -6,7 +6,7 @@ import canoe.models.Chat
 import cats.Monad
 import cats.data.OptionT
 import com.google.common.primitives.Longs
-import org.encryfoundation.tg.data.Errors.{BotError, DuplicateAuth, NotAuthUserError}
+import org.encryfoundation.tg.data.Errors.{BotError, DuplicateAuth, IncorrectPassword, NotAuthUserError}
 import org.encryfoundation.tg.db.Database
 import tofu._
 import tofu.syntax.monadic._
@@ -18,6 +18,7 @@ trait UserRepository[F[_]] {
   def isAuth(chat: Chat): F[Boolean]
   def isRegistered(chat: Chat): F[Boolean]
   def logoutUser(chat: Chat): F[Boolean]
+  def login(chat: Chat, pass: String): F[Unit]
 }
 
 object UserRepository {
@@ -41,6 +42,11 @@ object UserRepository {
 
     override def isRegistered(chat: Chat): F[Boolean] = OptionT(db.get(Longs.toByteArray(chat.id)))
       .fold(false)(elem => elem != null)
+
+    override def login(chat: Chat, pass: String): F[Unit] = for {
+      passCheck <- checkPass(pass, chat).verified(_ == true)(IncorrectPassword(chat))
+      _ <- db.put(Longs.toByteArray(chat.id), (1: Byte) +: pass.getBytes())
+    } yield ()
   }
 
   def apply[F[_]: Monad: Raise[*[_], BotError]](db: Database[F]): F[UserRepository[F]] = Monad[F].pure(Live[F](db))
