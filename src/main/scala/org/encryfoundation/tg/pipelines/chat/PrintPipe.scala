@@ -7,6 +7,11 @@ import canoe.models.messages.TextMessage
 import canoe.models.outgoing.TextContent
 import org.encryfoundation.tg.pipelines.Pipe
 
-case class PrintPipe[F[_]: TelegramClient, T](toPrint: T, chat: Chat) extends Pipe[F, TextMessage] {
-  override def interpret: Scenario[F, TextMessage] = Scenario.eval(chat.send(TextContent(toPrint.toString)))
+final class PrintPipe[F[_]: TelegramClient, T] private (toPrint: T, chat: Chat)
+                                                       (interpret: Scenario[F, TextMessage]) extends Pipe[F, T, TextMessage](interpret)
+
+object PrintPipe {
+
+  def apply[F[_]: TelegramClient, T](toPrint: T, chat: Chat): PrintPipe[F, T] =
+    new PrintPipe(toPrint, chat)(Scenario.eval(chat.send(TextContent(toPrint.toString))))
 }

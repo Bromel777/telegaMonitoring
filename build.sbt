@@ -41,6 +41,7 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-generic" % "0.11.2",
   "org.augustjune" %% "canoe" % "0.4.1",
   "com.github.cb372" %% "cats-retry" % "1.1.0",
+  "org.typelevel" %% "cats-tagless-macros" % "0.11",
   "ru.tinkoff" %% "tofu" % "0.7.1",
   "com.chuusai" %% "shapeless" % "2.3.3"
 ) ++ fs2

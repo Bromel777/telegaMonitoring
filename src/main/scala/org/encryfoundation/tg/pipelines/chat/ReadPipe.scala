@@ -6,6 +6,10 @@ import canoe.syntax.{text, _}
 import canoe.models.Chat
 import org.encryfoundation.tg.pipelines.Pipe
 
-case class ReadPipe[F[_], T](chat: Chat) extends Pipe[F, String]{
-  override def interpret: Scenario[F, String] = Scenario.expect(text)
+final class ReadPipe[F[_]] private (chat: Chat)(interpret: Scenario[F, String]) extends Pipe[F, Any, String](interpret)
+
+object ReadPipe {
+  def apply[F[_], T](chat: Chat): ReadPipe[F] = new ReadPipe(chat)(Scenario.expect(text))
 }
+
+
