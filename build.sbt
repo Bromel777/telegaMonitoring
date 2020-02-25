@@ -41,8 +41,11 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-generic" % "0.11.2",
   "org.augustjune" %% "canoe" % "0.4.1",
   "com.github.cb372" %% "cats-retry" % "1.1.0",
-  "ru.tinkoff" %% "tofu" % "0.7.1"
+  "org.typelevel" %% "cats-tagless-macros" % "0.11",
+  "ru.tinkoff" %% "tofu" % "0.7.1",
+  "com.chuusai" %% "shapeless" % "2.3.3"
 ) ++ fs2
 
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 addCompilerPlugin("org.typelevel"  % "kind-projector" % "0.11.0" cross CrossVersion.full)
