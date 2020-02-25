@@ -24,7 +24,6 @@ libraryDependencies ++= Seq(
   "org.typelevel"  %% "cats-effect" % "2.0.0-RC2",
   "io.chrisdavenport" %% "log4cats-slf4j" % "0.4.0-M2",
   "com.comcast" %% "ip4s-cats" % "1.2.1",
-  "com.typesafe.akka" %% "akka-actor" % "2.5.13",
   "ch.qos.logback" % "logback-core" % "1.2.3",
   "org.http4s" %% "http4s-dsl" % http4sVersion excludeAll(excludeFs2Binding),
   "org.http4s" %% "http4s-blaze-server" % http4sVersion excludeAll(excludeFs2Binding),
@@ -42,7 +41,10 @@ libraryDependencies ++= Seq(
   "org.augustjune" %% "canoe" % "0.4.1",
   "com.github.cb372" %% "cats-retry" % "1.1.0",
   "org.typelevel" %% "cats-tagless-macros" % "0.11",
+  "com.olegpy" %% "meow-mtl-core" % "0.4.0",
+  "com.olegpy" %% "meow-mtl-effects" % "0.4.0",
   "ru.tinkoff" %% "tofu" % "0.7.1",
+  "com.lihaoyi" %% "fastparse" % "2.1.3",
   "com.chuusai" %% "shapeless" % "2.3.3"
 ) ++ fs2
 

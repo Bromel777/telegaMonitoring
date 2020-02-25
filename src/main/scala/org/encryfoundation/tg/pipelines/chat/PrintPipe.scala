@@ -5,13 +5,24 @@ import canoe.api._
 import canoe.models.Chat
 import canoe.models.messages.TextMessage
 import canoe.models.outgoing.TextContent
-import org.encryfoundation.tg.pipelines.Pipe
+import cats.mtl.MonadState
+import fastparse.P
+import cats.implicits._
+import org.encryfoundation.tg.env.BotEnv
+import org.encryfoundation.tg.pipelines.{Pipe, PipeCompanion}
 
-final class PrintPipe[F[_]: TelegramClient, T] private (toPrint: T, chat: Chat)
-                                                       (interpret: Scenario[F, TextMessage]) extends Pipe[F, T, TextMessage](interpret)
+final class PrintPipe[F[_], T] private (toPrint: T)
+                                       (interpret: Scenario[F, TextMessage]) extends Pipe[F, T, TextMessage](interpret)
 
-object PrintPipe {
+object PrintPipe extends PipeCompanion {
 
-  def apply[F[_]: TelegramClient, T](toPrint: T, chat: Chat): PrintPipe[F, T] =
-    new PrintPipe(toPrint, chat)(Scenario.eval(chat.send(TextContent(toPrint.toString))))
+  def apply[F[_]: MonadState[*[_], BotEnv[F]], T](toPrint: T): Pipe[F, T, TextMessage] =
+    new PrintPipe(toPrint)(
+      for {
+        env <- Scenario.eval(MonadState[F, BotEnv[F]].get)
+        text <- Scenario.eval(env.chat.get.send(TextContent(toPrint.toString))(env.tgClient.get))
+      } yield text
+    )
+
+  override val name: String = "PrintPipe"
 }

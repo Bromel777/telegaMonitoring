@@ -6,6 +6,8 @@ import canoe.models.{KeyboardButton, ReplyKeyboardMarkup}
 import canoe.syntax.{text, _}
 import cats.effect.Sync
 import cats.implicits._
+import org.encryfoundation.tg.pipelines.Pipe
+import org.encryfoundation.tg.pipelines.chat.{InvokePipe, PrintPipe, ReadPipe}
 import org.encryfoundation.tg.services.{AuthService, UserService}
 
 object NonAuthCommands {
@@ -33,6 +35,17 @@ object NonAuthCommands {
         _ <- Scenario.eval(chat.send(s"Hello, $username"))
       } yield ()
     )
+
+//  def hello[F[_]: TelegramClient: Sync](authService: AuthService[F],
+//                                        userService: UserService[F]): Command[F] = {
+//    Command.make("hello")( chat =>
+//      (for {
+//        _ <- PrintPipe("Whats your name?", chat)
+//        name <- ReadPipe(chat)
+//        _ <- PrintPipe(s"Hello, $name", chat)
+//      } yield ()).run
+//    )
+//  }
 
   def sendInfo[F[_]: TelegramClient: Sync](userService: UserService[F]) =
     Command.make("info")(chat =>
