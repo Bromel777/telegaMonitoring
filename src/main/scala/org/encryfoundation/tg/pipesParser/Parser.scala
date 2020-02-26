@@ -7,13 +7,13 @@ import fastparse.{Parsed, _}
 import NoWhitespace._
 import cats.{Applicative, ApplicativeError, Monad, ~>}
 import cats.data.OptionT
-import cats.effect.Sync
+import cats.effect.concurrent.Ref
+import cats.effect.{IO, Sync}
 import org.encryfoundation.tg.pipelines.Pipe
 import cats.implicits._
 import cats.tagless.FunctorK
 import org.encryfoundation.tg.env.BotEnv
 import tofu.Raise
-
 import scala.util.{Failure, Success}
 
 object Parser {

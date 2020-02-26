@@ -6,7 +6,7 @@ import canoe.models.outgoing.TextContent
 import canoe.syntax._
 import cats.mtl.MonadState
 import org.encryfoundation.tg.env.BotEnv
-import org.encryfoundation.tg.pipelines.{Pipe}
+import org.encryfoundation.tg.pipelines.Pipe
 import cats.implicits._
 
 final class InvokePipe[F[_]] private (name: String)

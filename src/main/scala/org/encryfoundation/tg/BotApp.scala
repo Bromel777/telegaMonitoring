@@ -4,11 +4,10 @@ import java.io.File
 
 import canoe.api._
 import cats.Applicative
-import cats.data.State
 import cats.effect.concurrent.Ref
 import cats.effect.{ConcurrentEffect, ExitCode, IO, IOApp, Resource, Sync, Timer}
 import cats.implicits._
-import cats.mtl.MonadState
+import com.olegpy.meow.effects._
 import fs2.Stream
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
@@ -18,9 +17,7 @@ import org.encryfoundation.tg.commands.NonAuthCommands._
 import org.encryfoundation.tg.config.BotConfig
 import org.encryfoundation.tg.db.Database
 import org.encryfoundation.tg.env.BotEnv
-import org.encryfoundation.tg.pipelines.chat._
-import org.encryfoundation.tg.pipelines.json.{HttpApiJsonParsePipe, IntJsonType, Schema}
-import org.encryfoundation.tg.pipesParser.{Expressions, Parser}
+import org.encryfoundation.tg.pipesParser.Expressions
 import org.encryfoundation.tg.repositories.UserRepository
 import org.encryfoundation.tg.services.{AuthService, Explorer, UserService}
 import org.http4s.client.blaze.BlazeClientBuilder
@@ -39,7 +36,9 @@ object BotApp extends IOApp {
             Stream.eval(Logger[IO].info("Bot started!")) >>
             Stream.eval(Ref.of[IO, Map[String, Boolean]](config.nodes.nodes.map(ip => ip.toString() -> false).toMap)).flatMap { map =>
               val scenarious = commands.map(_.scenario)
-              bot.follow(scenarious: _*)
+              Stream.eval(Expressions.command(tgClient)).flatMap( command =>
+                bot.follow((command.asInstanceOf[Scenario[IO, Unit]] +: scenarious): _*)
+              )
             }
         }
     ).compile.drain.as(ExitCode.Success)

@@ -4,4 +4,5 @@ import canoe.api.TelegramClient
 import canoe.models.Chat
 
 case class BotEnv[F[_]](tgClient: Option[TelegramClient[F]],
-                        chat: Option[Chat])
+                        chat: Option[Chat],
+                        vars: Map[String, String] = Map.empty)
