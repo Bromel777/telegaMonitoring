@@ -13,6 +13,4 @@ object Lexer {
   val keywords: Set[String] = Set (
     "=>"
   )
-
-  val pipes: Set[String] = Pipes.acceptedPipes.map(_.name).toSet
 }

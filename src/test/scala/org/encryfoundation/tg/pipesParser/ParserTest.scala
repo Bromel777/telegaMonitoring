@@ -26,7 +26,7 @@ class ParserTest extends AnyPropSpec with Matchers {
 
   property("Simple test") {
 
-    val pipeText = "Read(test)"
+    val pipeText = "Invoke(hello) => Read(test)"
 
     val t = for {
       ref <- Ref[IO].of(BotEnv[IO](None, None))
@@ -35,7 +35,7 @@ class ParserTest extends AnyPropSpec with Matchers {
       }
     } yield res
 
-    t.unsafeRunSync().isInstanceOf[ReadPipe[IO]] shouldBe true
+    println(t.unsafeRunSync().companion.name)
   }
 
 }

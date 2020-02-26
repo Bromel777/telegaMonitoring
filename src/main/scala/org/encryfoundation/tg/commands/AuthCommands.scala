@@ -5,13 +5,14 @@ import canoe.models.Chat
 import canoe.syntax._
 import cats.Monad
 import cats.effect.concurrent.Ref
-import cats.effect.{Sync, Timer}
+import cats.effect.{IO, Sync, Timer}
 import cats.implicits._
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.encryfoundation.tg.config.BotConfig
+import org.encryfoundation.tg.pipesParser.Expressions
 import org.encryfoundation.tg.services.{AuthService, Explorer, UserService}
-
+import cats.effect.IO._
 import scala.concurrent.duration._
 
 object AuthCommands {
@@ -32,7 +33,6 @@ object AuthCommands {
         _ <- Scenario.eval(chat.send(nodeInfo.asJson.toString()))
       } yield ()
     )(userService)
-
 
   def chainMonitoring[F[_]: TelegramClient: Monad](explorer: Explorer[F],
                                                    authService: AuthService[F]) =

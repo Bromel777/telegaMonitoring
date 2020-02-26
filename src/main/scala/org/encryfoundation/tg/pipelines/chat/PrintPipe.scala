@@ -9,12 +9,12 @@ import cats.mtl.MonadState
 import fastparse.P
 import cats.implicits._
 import org.encryfoundation.tg.env.BotEnv
-import org.encryfoundation.tg.pipelines.{Pipe, PipeCompanion}
+import org.encryfoundation.tg.pipelines.{Pipe}
 
 final class PrintPipe[F[_], T] private (toPrint: T)
                                        (interpret: Scenario[F, TextMessage]) extends Pipe[F, T, TextMessage](interpret)
 
-object PrintPipe extends PipeCompanion {
+object PrintPipe {
 
   def apply[F[_]: MonadState[*[_], BotEnv[F]], T](toPrint: T): Pipe[F, T, TextMessage] =
     new PrintPipe(toPrint)(
@@ -23,6 +23,4 @@ object PrintPipe extends PipeCompanion {
         text <- Scenario.eval(env.chat.get.send(TextContent(toPrint.toString))(env.tgClient.get))
       } yield text
     )
-
-  override val name: String = "PrintPipe"
 }

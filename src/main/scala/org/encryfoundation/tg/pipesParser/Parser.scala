@@ -24,10 +24,10 @@ object Parser {
 
   def parsePipes[F[_]: Monad](source: String)
                              (implicit F: MonadState[F, BotEnv[F]],
-                              err: Raise[F, Throwable]): F[Pipe[F, Any, Any]] = {
-    def expr[_: P] = P(Expressions.expr ~ End)
+                              err: Raise[F, Throwable]): F[Pipe[F, Nothing, Any]] = {
+    def expr[_: P] = P(Expressions.pipeline[F] ~ End)
     parse(source, expr(_)) match {
-      case r: Parsed.Success[Pipe[F, Any, Any]] => r.value.pure[F]
+      case r: Parsed.Success[Pipe[F, Nothing, Any]] => r.value.pure[F]
       case e: Parsed.Failure => err.raise(new Throwable(s"${e}"))
     }
   }

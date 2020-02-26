@@ -8,6 +8,7 @@ import cats.data.State
 import cats.effect.concurrent.Ref
 import cats.effect.{ConcurrentEffect, ExitCode, IO, IOApp, Resource, Sync, Timer}
 import cats.implicits._
+import cats.mtl.MonadState
 import fs2.Stream
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
@@ -19,7 +20,7 @@ import org.encryfoundation.tg.db.Database
 import org.encryfoundation.tg.env.BotEnv
 import org.encryfoundation.tg.pipelines.chat._
 import org.encryfoundation.tg.pipelines.json.{HttpApiJsonParsePipe, IntJsonType, Schema}
-import org.encryfoundation.tg.pipesParser.Parser
+import org.encryfoundation.tg.pipesParser.{Expressions, Parser}
 import org.encryfoundation.tg.repositories.UserRepository
 import org.encryfoundation.tg.services.{AuthService, Explorer, UserService}
 import org.http4s.client.blaze.BlazeClientBuilder
@@ -35,7 +36,6 @@ object BotApp extends IOApp {
           case (tgClient, config, explorer, userRepo, authService, userService, commands) =>
             implicit val client = tgClient
             val bot = Bot.polling[IO]
-            val a = "PrintPipe(test)"
             Stream.eval(Logger[IO].info("Bot started!")) >>
             Stream.eval(Ref.of[IO, Map[String, Boolean]](config.nodes.nodes.map(ip => ip.toString() -> false).toMap)).flatMap { map =>
               val scenarious = commands.map(_.scenario)
@@ -65,7 +65,6 @@ object BotApp extends IOApp {
       logoutPipeline(authService, userService),
       sendInfo(userService),
       login(authService, userService),
-      //hello(authService, userService)
     ))
     menu <- Resource.pure[F, Command[F]](menu(authService, commands))
   } yield {
