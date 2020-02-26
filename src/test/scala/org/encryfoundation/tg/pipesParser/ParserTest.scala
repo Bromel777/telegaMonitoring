@@ -28,14 +28,14 @@ class ParserTest extends AnyPropSpec with Matchers {
 
     val pipeText = "Invoke(hello) => Read(test)"
 
-    val t = for {
+    val t: IO[Pipe[IO, Nothing, Any]] = for {
       ref <- Ref[IO].of(BotEnv[IO](None, None))
       res <- ref.runState { implicit monadState: MonadState[IO, BotEnv[IO]] =>
         Parser.parsePipes[IO](pipeText)
       }
     } yield res
 
-    println(t.unsafeRunSync().companion.name)
+    t.unsafeRunSync().isInstanceOf[Pipe[IO, Nothing, Any]] shouldBe true
   }
 
 }
