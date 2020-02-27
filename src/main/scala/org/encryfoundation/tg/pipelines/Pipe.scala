@@ -1,13 +1,6 @@
 package org.encryfoundation.tg.pipelines
 
 import canoe.api.Scenario
-import cats.kernel.Semigroup
-import canoe.api.Scenario
-import cats.data.State
-import cats.effect.IO
-import cats.tagless.{autoFunctorK, finalAlg}
-import cats.~>
-import org.encryfoundation.tg.env.BotEnv
 
 trait Pipe[F[_], -I, +O] {
 

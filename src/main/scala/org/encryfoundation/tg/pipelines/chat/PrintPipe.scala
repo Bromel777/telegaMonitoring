@@ -1,7 +1,6 @@
 package org.encryfoundation.tg.pipelines.chat
 
 import canoe.api.{Scenario, _}
-import canoe.models.messages.TextMessage
 import canoe.models.outgoing.TextContent
 import cats.Applicative
 import cats.mtl.MonadState

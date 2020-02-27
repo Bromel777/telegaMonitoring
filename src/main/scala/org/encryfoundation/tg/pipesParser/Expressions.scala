@@ -12,7 +12,6 @@ import org.encryfoundation.tg.pipelines.chat.{InvokePipe, PrintPipe, ReadPipe}
 import org.encryfoundation.tg.pipelines.{Pipe, PipeEnv}
 import tofu.Raise
 
-
 object Expressions {
 
   def STRING[_: P] = P(CharIn("a-z").rep(1).!)
