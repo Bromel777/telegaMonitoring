@@ -12,7 +12,7 @@ import cats.effect.IO
 import cats.effect.concurrent.Ref
 import cats.mtl.MonadState
 import org.encryfoundation.tg.env.BotEnv
-import org.encryfoundation.tg.pipelines.Pipe
+import org.encryfoundation.tg.pipelines.{Pipe, PipeEnv}
 import org.encryfoundation.tg.pipelines.chat.{InvokePipe, PrintPipe, ReadPipe}
 import com.olegpy.meow.effects._
 
@@ -30,13 +30,13 @@ object Expressions {
 
   def STRING[_: P] = P(CharIn("a-z").rep(1).!)
 
-  def printPipe[F[_]: MonadState[*[_], BotEnv[F]]](implicit t: P[_]) =
+  def printPipe[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](implicit t: P[_]) =
     P("Print(" ~ STRING ~ ")").map(toPrint => PrintPipe(toPrint))
 
   def readPipe[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](implicit t: P[_]) =
     P("Read(" ~ STRING ~ ")").map(varName => ReadPipe[F](varName))
 
-  def invokePipe[F[_]: MonadState[*[_], BotEnv[F]]](implicit t: P[_]) =
+  def invokePipe[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](implicit t: P[_]) =
     P("Invoke(" ~ STRING ~ ")").map(invokeName => InvokePipe(invokeName))
 
   def apipes[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](implicit t: P[_]) =
@@ -46,19 +46,19 @@ object Expressions {
 
   def pipeline[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](implicit t: P[_]) =
     P (invokePipe ~ pipes.rep(1)).map { case (invokePipe, pipes) =>
-      pipes.foldLeft(invokePipe.asInstanceOf[Pipe[F, Nothing, Any]]){
+      pipes.foldLeft(invokePipe){
         case (pipeLine, nextPipe) =>
-          combine[F, Nothing, Any, Nothing, Any](pipeLine, nextPipe.asInstanceOf[Pipe[F, Nothing, Any]])
+          pipeLine.combine(nextPipe)
       }
     }
 
-  val pipe = "Invoke(testinvoke) => Read(variable) => Print(variable)"
+  val pipe = "Invoke(testinvoke) => Print(var) => Read(var) => Read(abc) => Print(var)"
 
   def command(tgClient: TelegramClient[IO]) = for {
     ref <- Ref[IO].of(BotEnv[IO](Some(tgClient), None))
     res <- ref.runState { implicit monadState =>
       Parser.parsePipes[IO](pipe)
     }
-  } yield res.interpret
+  } yield res.commonFunc(PipeEnv.empty.copy(Map("var" -> "test")))
 
 }
