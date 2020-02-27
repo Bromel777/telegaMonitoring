@@ -2,14 +2,20 @@ package org.encryfoundation.tg.pipelines.chat
 
 import canoe.api.{Scenario, TelegramClient, _}
 import canoe.models.Chat
+import canoe.models.outgoing.TextContent
 import canoe.syntax._
-import org.encryfoundation.tg.pipelines.Pipe
-
-final class InvokePipe[F[_]: TelegramClient] private (name: String)
-                                                     (interpret: Scenario[F, Chat]) extends Pipe[F, Any, Chat](interpret)
+import cats.Applicative
+import cats.mtl.MonadState
+import org.encryfoundation.tg.env.BotEnv
+import org.encryfoundation.tg.pipelines.{EnvironmentPipe, Pipe, PipeEnv}
+import cats.implicits._
 
 object InvokePipe {
 
-  def apply[F[_]: TelegramClient](name: String): InvokePipe[F] =
-    new InvokePipe(name)(Scenario.expect(command(name).chat))
+  def apply[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](name: String): EnvironmentPipe[F] =
+    EnvironmentPipe[F]( (prevEnv: PipeEnv) =>
+      for {
+        botChat <- Scenario.expect(command(name).chat)
+      } yield prevEnv.copy(chat = botChat.some)
+    )
 }
