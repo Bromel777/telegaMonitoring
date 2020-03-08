@@ -28,7 +28,7 @@ object Parser {
     def expr[_: P] = P(Expressions.pipeline[F] ~ End)
     parse(source, expr(_)) match {
       case r: Parsed.Success[EnvironmentPipe[F]] => r.value.pure[F]
-      case e: Parsed.Failure => err.raise(new Throwable(s"${e}"))
+      case e: Parsed.Failure => err.raise(new Throwable(s"${e.trace(true)}"))
     }
   }
 }

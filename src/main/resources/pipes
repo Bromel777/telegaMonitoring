@@ -1,1 +1,1 @@
-Invoke(testinvoke) => Read(var) => Read(abc) => Print(var) => Print(abc)
+Invoke(test) => ParseJson(http://test.ru/test)

@@ -14,7 +14,6 @@ object ReadPipe {
      EnvironmentPipe((envPipe: PipeEnv) =>
       for {
         text <- Scenario.expect(text)
-        _ <- Scenario.eval(println("put").pure[F])
       } yield envPipe.copy(variables = envPipe.variables + (varName -> text))
     )
 }

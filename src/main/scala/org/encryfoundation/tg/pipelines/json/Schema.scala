@@ -15,12 +15,9 @@ object Schema {
       val keys = hCursor.keys.get
       keys.foldLeft(HNil: HList) {
         case (list, key) =>
-          val elem = userSchema(key)
-          println(key)
-          println(elem)
-          println(hCursor.downField(key))
+          val elem = userSchema.getOrElse(key, StringJsonType)
           HList.unsafePrepend(
-            hCursor.downField(key).as[elem.Underlying](elem.decoder).right.get :: HNil,
+            (key -> hCursor.downField(key).as[elem.Underlying](elem.decoder).right.get) :: HNil,
             list
           )
       }
@@ -28,4 +25,6 @@ object Schema {
 
     override val decoder: Decoder[HList] = (c: HCursor) => Right(parse(c))
   }
+
+  def empty = Schema.apply(Map.empty)
 }
