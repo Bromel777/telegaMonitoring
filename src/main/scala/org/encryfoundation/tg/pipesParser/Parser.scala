@@ -12,8 +12,10 @@ import cats.effect.{IO, Sync}
 import org.encryfoundation.tg.pipelines.{EnvironmentPipe, Pipe}
 import cats.implicits._
 import cats.tagless.FunctorK
+import org.encryfoundation.tg.data.Errors.BotError
 import org.encryfoundation.tg.env.BotEnv
 import tofu.Raise
+
 import scala.util.{Failure, Success}
 
 object Parser {

@@ -30,15 +30,15 @@ object Expressions {
   def invokePipe[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](implicit t: P[_]) =
     P("Invoke(" ~ STRING ~ ")").map(invokeName => InvokePipe(invokeName))
 
-  def httpApiJsonParsePipe[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](implicit t: P[_]) =
-    P("ParseJson(" ~ URL ~ ")").map{ case urlToParse => HttpApiJsonParsePipe(url = urlToParse)}
+  def httpApiJsonParsePipe[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](implicit t: P[_], f1: Raise[F, Throwable]) =
+    P("ParseJson(" ~ URL ~ ")").map { case urlToParse => HttpApiJsonParsePipe(url = urlToParse)}
 
-  def apipes[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](implicit t: P[_]) =
+  def apipes[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](implicit t: P[_], f1: Raise[F, Throwable]) =
     P( httpApiJsonParsePipe[F] | readPipe[F] | printPipe[F] )
 
-  def pipes[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](implicit t: P[_]) = P(" => " ~ apipes[F])
+  def pipes[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](implicit t: P[_], f1: Raise[F, Throwable]) = P(" => " ~ apipes[F])
 
-  def pipeline[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](implicit t: P[_]) =
+  def pipeline[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](implicit t: P[_], f1: Raise[F, Throwable]) =
     P (invokePipe ~ pipes.rep(1)).map { case (invokePipe, pipes) =>
       pipes.foldLeft(invokePipe){
         case (pipeLine, nextPipe) =>
@@ -46,7 +46,7 @@ object Expressions {
       }
     }
 
-  def parseCommand[F[_]: MonadState[*[_], BotEnv[F]]: Monad: Raise[*[_], Throwable]](tgClient: TelegramClient[IO])(pipeToParse: String) = for {
+  def parseCommand[F[_]: MonadState[*[_], BotEnv[F]]: Monad](tgClient: TelegramClient[IO])(pipeToParse: String)(implicit f1: Raise[F, Throwable]) = for {
     res <- Parser.parsePipes[F](pipeToParse)
   } yield res.commonFunc(PipeEnv.empty.copy())
 }

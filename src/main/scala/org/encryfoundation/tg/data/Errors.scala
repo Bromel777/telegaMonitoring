@@ -20,4 +20,7 @@ object Errors {
   case class NotRegisteredChat(chat: Chat) extends BotError {
     override val msgToChat: String = "You are not registered in this chat!"
   }
+  case class PipeErr(chat: Chat) extends BotError {
+    override val msgToChat: String = "Error in pipe!"
+  }
 }

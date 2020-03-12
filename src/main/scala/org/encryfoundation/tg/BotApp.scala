@@ -17,6 +17,7 @@ import org.encryfoundation.tg.commands.NonAuthCommands._
 import org.encryfoundation.tg.config.BotConfig
 import org.encryfoundation.tg.db.Database
 import org.encryfoundation.tg.env.BotEnv
+import org.encryfoundation.tg.pipelines.PipeEnv
 import org.encryfoundation.tg.pipesParser.{Expressions, Parser, ScenariousParser}
 import org.encryfoundation.tg.repositories.UserRepository
 import org.encryfoundation.tg.services.{AuthService, Explorer, UserService}
@@ -55,8 +56,11 @@ object BotApp extends IOApp {
     authService <- Resource.liftF(AuthService[F](repo))
     userService <- Resource.liftF(UserService[F](List()))
     pipesToParse <- Resource.make(new File( "./src/main/resources/pipes" ).pure[F])(_ => ().pure[F])
-        .flatMap{file => Resource.liftF(Source.fromFile(file).getLines().toList.pure[F])}
-    parsedScenarious <- Resource.liftF(ScenariousParser.getScenarious(tgClient, explorer)(pipesToParse))
+        .flatMap{ file => Resource.liftF(Source.fromFile(file).getLines().toList.pure[F]) }
+    ref <- Resource.liftF(Ref[F].of(BotEnv[F](Some(tgClient), explorer)))
+    parsedScenarious <- ref.runState { implicit env =>
+      Resource.liftF(ScenariousParser.getScenarious(pipesToParse).map(_.map(_.compile(PipeEnv.empty))))
+    }
     map <- Resource.liftF(Ref.of[F, Map[String, Boolean]](config.nodes.nodes.map(ip => ip.toString() -> false).toMap))
     commands <- Resource.pure[F, List[Command[F]]](List(
       nodeStatusMonitoring(explorer, authService),

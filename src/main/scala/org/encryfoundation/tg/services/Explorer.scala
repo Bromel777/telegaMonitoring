@@ -15,6 +15,7 @@ import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.{Method, Request, Uri}
 import retry.RetryDetails.{GivingUp, WillDelayAndRetry}
 import retry.{RetryDetails, _}
+import tofu.Raise
 
 import scala.concurrent.ExecutionContext
 
@@ -52,7 +53,7 @@ object Explorer {
         onError = logExplorerError
       )(client.expect[T](req.uri)(jsonOf[F, T]))
 
-    private def logExplorerError(err: Throwable, details: RetryDetails): F[Unit] = details match {
+    private def logExplorerError(err: Throwable, details: RetryDetails)(implicit eraise: Raise[F, Throwable]): F[Unit] = details match {
       case WillDelayAndRetry(_, retriesSoFar: Int, _) =>
         Logger[F].error(err)(s"Failure to make get request from explorer. Qty of request: $retriesSoFar")
       case GivingUp(totalRetries: Int, _) =>
