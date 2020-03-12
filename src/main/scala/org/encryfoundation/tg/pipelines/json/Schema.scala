@@ -4,26 +4,32 @@ import io.circe.{Decoder, HCursor, Json}
 import shapeless.{HList, HNil}
 
 trait Schema {
-  def parse(hCursor: HCursor): HList
-  val decoder: Decoder[HList]
+  def parse(hCursor: HCursor): List[(String, Any)]
+  val decoder: Decoder[List[(String, Any)]]
 }
 
 object Schema {
 
+  val jsonTypes: Map[String, JsonType] = Map(
+    "string" -> StringJsonType,
+    "int" -> IntJsonType,
+    "long" -> LongJsonType
+  )
+
+  case class Field(name: String, fType: JsonType)
+
   def apply(userSchema: Map[String, JsonType]): Schema = new Schema {
-    override def parse(hCursor: HCursor): HList = {
+    override def parse(hCursor: HCursor): List[(String, Any)] = {
       val keys = hCursor.keys.get
-      keys.foldLeft(HNil: HList) {
-        case (list, key) =>
+      keys.foldLeft(List.empty[(String, Any)]) {
+        case (list, key) if userSchema.contains(key) =>
           val elem = userSchema.getOrElse(key, StringJsonType)
-          HList.unsafePrepend(
-            (key -> hCursor.downField(key).as[elem.Underlying](elem.decoder).right.get) :: HNil,
-            list
-          )
+          (key -> hCursor.downField(key).as[elem.Underlying](elem.decoder).right.get) :: list
+        case (list, _) => list
       }
     }
 
-    override val decoder: Decoder[HList] = (c: HCursor) => Right(parse(c))
+    override val decoder: Decoder[List[(String, Any)]] = (c: HCursor) => Right(parse(c))
   }
 
   def empty = Schema.apply(Map.empty)

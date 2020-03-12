@@ -29,10 +29,10 @@ object HttpApiJsonParsePipe {
     EnvironmentPipe[F]((env: PipeEnv) =>
       (for {
         botEnv <- Scenario.eval(MonadState[F, BotEnv[F]].get)
-        res <- Scenario.eval(botEnv.explorer.makeGetRequest[HList](request)(schema.decoder)).handleErrorWith {
+        res <- Scenario.eval(botEnv.explorer.makeGetRequest[List[(String, Any)]](request)(schema.decoder)).handleErrorWith {
           _: Throwable => Scenario.eval(f1.raise(PipeErr(env.chat.get)))
         }
-      } yield env.copy(variables = env.variables + ("json" -> res.toString)))
+      } yield env.copy(variables = env.variables ++ res.map{case (elemName, elemValue) => elemName -> elemValue.toString}))
     )
   }
 }
