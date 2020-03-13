@@ -2,6 +2,7 @@ package org.encryfoundation.tg.pipelines.alerts
 
 import canoe.api.Scenario
 import canoe.api._
+import cats.syntax.applicative._
 import canoe.models.outgoing.TextContent
 import cats.Applicative
 import cats.mtl.MonadState

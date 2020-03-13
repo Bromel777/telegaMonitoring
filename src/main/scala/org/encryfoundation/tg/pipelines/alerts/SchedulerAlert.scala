@@ -1,7 +1,9 @@
 package org.encryfoundation.tg.pipelines.alerts
 
+import canoe.api.Scenario
 import cats.Applicative
 import cats.mtl.MonadState
+import cats.syntax.applicative._
 import cats.syntax.parallel._
 import cats.instances.list._
 import cats.kernel.Monoid
@@ -17,15 +19,15 @@ object SchedulerAlert {
                                                             grabberPipes: List[EnvironmentPipe[F]],
                                                             alertCondition: AlertCondition[F],
                                                             time: Duration): EnvironmentPipe[F] = EnvironmentPipe[F] { (envPipe: PipeEnv) => {
-    val commonPipe = grabberPipes.tail.foldLeft(grabberPipes.head) {
+    def commonPipe = grabberPipes.tail.foldLeft(grabberPipes.head) {
       case (acc, nextPipe) => acc.combine(nextPipe)
     }
 
     val res = for {
-      resultEnv <- commonPipe
-      _ <- NotificationAlert(alertCondition)
+      resultEnv <- commonPipe.commonFunc(envPipe)
+      _ <- NotificationAlert(alertCondition).compile(resultEnv)
     } yield Monoid[PipeEnv].combine(envPipe, resultEnv)
 
-    res.run
+    res
   }}
 }
