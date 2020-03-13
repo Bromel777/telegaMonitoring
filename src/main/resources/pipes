@@ -1,1 +1,10 @@
-Invoke(test) => ParseJson(http://test.ru/test/test)
+Invoke(test) =>
+SchedulerAlert (
+    fields = [name1, name2],
+    grabberPipes = (
+        ParseJson(url = http://test.ru/test/test, fields = [height1:string]) =>
+        ParseJson(url = http://test.ru/test/test, fields = [height2:string])
+    ),
+    alertCondition = ValueAlert(name1 != name2),
+    time = 2 second
+) => Print(s"Alert! Height ${name1} != ${name2}")

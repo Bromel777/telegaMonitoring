@@ -2,9 +2,10 @@ package org.encryfoundation.tg.pipelines
 
 import canoe.api.{Scenario, _}
 import canoe.models.outgoing.TextContent
-import cats.Applicative
+import cats.{Applicative, Apply, FlatMap, Monad, NonEmptyParallel, Parallel, ~>}
 import cats.effect.Sync
 import cats.implicits._
+import cats.kernel.Monoid
 import cats.mtl.MonadState
 import org.encryfoundation.tg.data.Errors.BotError
 import org.encryfoundation.tg.env.BotEnv
@@ -18,6 +19,7 @@ trait EnvironmentPipe[F[_]] extends Pipe[F, PipeEnv, PipeEnv] {
 }
 
 object EnvironmentPipe {
+
   def apply[F[_]: MonadState[*[_], BotEnv[F]]](envPipe: PipeEnv => Scenario[F, PipeEnv])(implicit a: Applicative[F]): EnvironmentPipe[F] =
     new EnvironmentPipe[F] {
       override def commonFunc: PipeEnv => Scenario[F, PipeEnv] = envPipe
