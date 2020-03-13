@@ -56,10 +56,10 @@ object BotApp extends IOApp {
     authService <- Resource.liftF(AuthService[F](repo))
     userService <- Resource.liftF(UserService[F](List()))
     pipesToParse <- Resource.make(new File( "./src/main/resources/pipes" ).pure[F])(_ => ().pure[F])
-        .flatMap{ file => Resource.liftF(Source.fromFile(file).getLines().toList.pure[F]) }
+        .flatMap{ file => Resource.liftF(Source.fromFile(file).getLines().toList.mkString("\n").pure[F]) }
     ref <- Resource.liftF(Ref[F].of(BotEnv[F](Some(tgClient), explorer)))
     parsedScenarious <- ref.runState { implicit env =>
-      Resource.liftF(ScenariousParser.getScenarious(pipesToParse).map(_.map(_.compile(PipeEnv.empty))))
+      Resource.liftF(ScenariousParser.getScenarious(List(pipesToParse)).map(_.map(_.compile(PipeEnv.empty))))
     }
     map <- Resource.liftF(Ref.of[F, Map[String, Boolean]](config.nodes.nodes.map(ip => ip.toString() -> false).toMap))
     commands <- Resource.pure[F, List[Command[F]]](List(

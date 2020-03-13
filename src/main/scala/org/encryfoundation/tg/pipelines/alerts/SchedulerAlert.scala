@@ -1,10 +1,12 @@
 package org.encryfoundation.tg.pipelines.alerts
 
 import cats.Applicative
-import cats.effect.ContextShift
-import cats.kernel.Monoid
 import cats.mtl.MonadState
-import org.encryfoundation.tg.env.{AlertCondition, BotEnv}
+import cats.syntax.parallel._
+import cats.instances.list._
+import cats.kernel.Monoid
+import org.encryfoundation.tg.env.BotEnv
+import org.encryfoundation.tg.env.conditions.AlertCondition
 import org.encryfoundation.tg.pipelines.{EnvironmentPipe, Pipe, PipeEnv}
 
 import scala.concurrent.duration.Duration
@@ -12,16 +14,18 @@ import scala.concurrent.duration.Duration
 object SchedulerAlert {
 
   def apply[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](fields: List[String],
-                                                            grabberPipes: List[PipeEnv => EnvironmentPipe[F]],
-                                                            alertCondition: AlertCondition,
-                                                            time: Duration): EnvironmentPipe[F] = new EnvironmentPipe[F] { (envPipe: PipeEnv) => {
-    def grabFields = grabberPipes.tail.foldLeft[Pipe[F, PipeEnv, PipeEnv]](grabberPipes.head(envPipe)) {
-      case (commonPipe, nextGrabPipe) => commonPipe.flatMap(res => nextGrabPipe(res))
+                                                            grabberPipes: List[EnvironmentPipe[F]],
+                                                            alertCondition: AlertCondition[F],
+                                                            time: Duration): EnvironmentPipe[F] = EnvironmentPipe[F] { (envPipe: PipeEnv) => {
+    val commonPipe = grabberPipes.tail.foldLeft(grabberPipes.head) {
+      case (acc, nextPipe) => acc.combine(nextPipe)
     }
 
-    val alertPipe = for {
-      resultEnv <- grabFields
+    val res = for {
+      resultEnv <- commonPipe
       _ <- NotificationAlert(alertCondition)
-    } yield resultEnv
+    } yield Monoid[PipeEnv].combine(envPipe, resultEnv)
+
+    res.run
   }}
 }

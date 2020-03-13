@@ -4,7 +4,7 @@ import canoe.api.TelegramClient
 import canoe.models.Chat
 import cats.mtl.MonadState
 import fastparse.{Parsed, _}
-import NoWhitespace._
+import fastparse.MultiLineWhitespace._
 import cats.{Applicative, ApplicativeError, Monad, ~>}
 import cats.data.OptionT
 import cats.effect.concurrent.Ref
@@ -18,15 +18,15 @@ import tofu.Raise
 
 import scala.util.{Failure, Success}
 
-object Parser {
+import scala.util.{Failure, Success, Try}
+
+trait Parser {
 
   def parsePipes[F[_]: Monad](source: String)
                              (implicit F: MonadState[F, BotEnv[F]],
-                              err: Raise[F, Throwable]): F[EnvironmentPipe[F]] = {
-    def expr[_: P] = P(Expressions.pipeline[F] ~ End)
-    parse(source, expr(_)) match {
-      case r: Parsed.Success[EnvironmentPipe[F]] => r.value.pure[F]
-      case e: Parsed.Failure => err.raise(new Throwable(s"${e.trace(true)}"))
-    }
+                              err: Raise[F, Throwable]): F[Parsed[EnvironmentPipe[F]]] = {
+    def expr[_: P] = P(Expressions.apipes[F] ~ End)
+    parse(source, expr(_)).pure[F]
   }
+
 }

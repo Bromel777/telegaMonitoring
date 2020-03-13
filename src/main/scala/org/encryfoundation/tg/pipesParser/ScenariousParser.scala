@@ -9,6 +9,7 @@ import tofu.Raise
 
 object ScenariousParser {
 
-  def getScenarious[F[_]: MonadState[*[_], BotEnv[F]]: Monad: Raise[*[_], Throwable]](pipes: List[String]) =
+  def getScenarious[F[_]: MonadState[*[_], BotEnv[F]]: Monad: Raise[*[_], Throwable]](pipes: List[String]) = {
     pipes.traverse(parsePipes[F])
+  }
 }
