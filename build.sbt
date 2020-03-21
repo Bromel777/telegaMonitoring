@@ -18,6 +18,8 @@ val fs2 = Seq(
   "co.fs2" %% "fs2-io" % "2.1.0"
 )
 
+val monocleVersion = "2.0.0"
+
 val excludeFs2Binding = ExclusionRule(organization = "co.fs2")
 
 libraryDependencies ++= Seq(
@@ -38,6 +40,9 @@ libraryDependencies ++= Seq(
   "co.fs2" %% "fs2-core" % "2.1.0",
   "co.fs2" %% "fs2-io" % "2.1.0",
   "io.circe" %% "circe-generic" % "0.11.2",
+  "com.github.julien-truffaut" %%  "monocle-core"  % monocleVersion,
+  "com.github.julien-truffaut" %%  "monocle-macro" % monocleVersion,
+  "com.github.julien-truffaut" %%  "monocle-law"   % monocleVersion % "test",
   "org.augustjune" %% "canoe" % "0.4.1",
   "com.github.cb372" %% "cats-retry" % "1.1.0",
   "org.typelevel" %% "cats-tagless-macros" % "0.11",

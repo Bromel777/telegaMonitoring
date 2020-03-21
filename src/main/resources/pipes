@@ -1,1 +1,9 @@
-Invoke(test) => ParseJson(http://test.ru/test/test)
+Invoke(test) => Alert(
+    fields = [name: string, name: string],
+    grabberPipes = (
+        ParseJson(url = http://11.22.33.44:5555/info, fields = [height:string]),
+        ParseJson(url = http://11.22.33.45:5555/info, fields = [height:string])
+    ),
+    alertCondition = ValueAlert(name == name),
+    timeout = 2
+)

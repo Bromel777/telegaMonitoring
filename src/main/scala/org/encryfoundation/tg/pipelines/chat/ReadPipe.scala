@@ -4,9 +4,8 @@ import canoe.api.Scenario
 import canoe.syntax.{text, _}
 import cats.Applicative
 import cats.mtl.MonadState
-import cats.implicits._
-import cats.syntax._
 import org.encryfoundation.tg.env.BotEnv
+import org.encryfoundation.tg.pipelines.json.{StringJsonType, Value}
 import org.encryfoundation.tg.pipelines.{EnvironmentPipe, Pipe, PipeEnv}
 
 object ReadPipe {
@@ -14,7 +13,7 @@ object ReadPipe {
      EnvironmentPipe((envPipe: PipeEnv) =>
       for {
         text <- Scenario.expect(text)
-      } yield envPipe.copy(variables = envPipe.variables + (varName -> text))
+      } yield envPipe.copy(variables = envPipe.variables + (varName -> Value(varName, text, StringJsonType)))
     )
 }
 
