@@ -10,20 +10,20 @@ trait Schema {
 
 object Schema {
 
-  val jsonTypes: Map[String, JsonTypeCompanion] = Map(
-    "string" -> StringJsonTypeCompanion$,
-    "int" -> IntJsonTypeCompanion$,
-    "long" -> LongJsonTypeCompanion$
+  val jsonTypes: Map[String, JsonType] = Map(
+    "string" -> StringJsonType,
+    "int" -> IntJsonType,
+    "long" -> LongJsonType
   )
 
-  case class Field(name: String, fType: JsonTypeCompanion)
+  case class Field(name: String, fType: JsonType)
 
-  def apply(userSchema: Map[String, JsonTypeCompanion]): Schema = new Schema {
+  def apply(userSchema: Map[String, JsonType]): Schema = new Schema {
     override def parse(hCursor: HCursor): List[(String, Any)] = {
       val keys = hCursor.keys.get
       keys.foldLeft(List.empty[(String, Any)]) {
         case (list, key) if userSchema.contains(key) =>
-          val elem = userSchema.getOrElse(key, StringJsonTypeCompanion$)
+          val elem = userSchema.getOrElse(key, StringJsonType)
           (key -> hCursor.downField(key).as[elem.Underlying](elem.decoder).right.get) :: list
         case (list, _) => list
       }

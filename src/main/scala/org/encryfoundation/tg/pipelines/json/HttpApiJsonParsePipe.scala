@@ -32,7 +32,9 @@ object HttpApiJsonParsePipe {
         res <- Scenario.eval(botEnv.explorer.makeGetRequest[List[(String, Any)]](request)(schema.decoder)).handleErrorWith {
           _: Throwable => Scenario.eval(f1.raise(PipeErr(env.chat.get)))
         }
-      } yield env.copy(variables = env.variables ++ res.map{case (elemName, elemValue) => elemName -> elemValue.toString}))
+      } yield env.copy(variables = env.variables ++ res.map{ case (elemName, elemValue) =>
+        elemName -> Value(elemName, elemValue.toString, StringJsonType)}
+      ))
     )
   }
 }

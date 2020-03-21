@@ -1,7 +1,7 @@
 package org.encryfoundation.tg.pipesParser
 
 import canoe.api.TelegramClient
-import cats.effect.IO
+import cats.effect.{IO, Timer}
 import cats.implicits._
 import cats.mtl.MonadState
 import cats.{Applicative, Monad}
@@ -13,6 +13,7 @@ import org.encryfoundation.tg.pipelines.PipeEnv
 import org.encryfoundation.tg.pipelines.alerts.SchedulerAlert
 import org.encryfoundation.tg.pipelines.chat.{InvokePipe, PrintPipe, ReadPipe}
 import org.encryfoundation.tg.pipelines.json.Schema.Field
+
 import scala.concurrent.duration._
 import org.encryfoundation.tg.pipelines.json.{HttpApiJsonParsePipe, Schema}
 import org.encryfoundation.tg.pipesParser.Expressions.schedulerAlert
@@ -52,7 +53,7 @@ object Expressions {
       case (urlToParse, fields) => HttpApiJsonParsePipe(schema = Schema(fields.map(el => el.name -> el.fType).toMap), url = urlToParse)
     }
 
-  def schedulerAlert[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](implicit t: P[_], f1: Raise[F, Throwable]) =
+  def schedulerAlert[F[_]: MonadState[*[_], BotEnv[F]]: Timer: Monad](implicit t: P[_], f1: Raise[F, Throwable]) =
     P("Alert("~ space ~"fields = [" ~/ field ~ "]," ~ space ~ "grabberPipes = (" ~ grabberPipes ~ "),"
       ~ space ~ "alertCondition = " ~ valueCondition[F] ~ ","
       ~ space ~ "timeout = " ~ INT ~ ")").map { case (fields, grabbingPipes, condition, time) =>
@@ -70,12 +71,12 @@ object Expressions {
   def multipleGrabberPipes[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](implicit t: P[_], f1: Raise[F, Throwable]) =
     P( "," ~ (httpApiJsonParsePipe[F] | printPipe[F]) )
 
-  def apipes[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](implicit t: P[_], f1: Raise[F, Throwable]) =
+  def apipes[F[_]: MonadState[*[_], BotEnv[F]]: Timer: Monad](implicit t: P[_], f1: Raise[F, Throwable]) =
     P( space ~ schedulerAlert[F] | httpApiJsonParsePipe[F] | readPipe[F] | printPipe[F])
 
-  def pipes[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](implicit t: P[_], f1: Raise[F, Throwable]) = P(("=>" ~ apipes[F]))
+  def pipes[F[_]: MonadState[*[_], BotEnv[F]]: Timer: Monad](implicit t: P[_], f1: Raise[F, Throwable]) = P(("=>" ~ apipes[F]))
 
-  def pipeline[F[_]: MonadState[*[_], BotEnv[F]]: Applicative](implicit t: P[_], f1: Raise[F, Throwable]) =
+  def pipeline[F[_]: MonadState[*[_], BotEnv[F]]: Timer: Monad](implicit t: P[_], f1: Raise[F, Throwable]) =
     P (invokePipe ~ pipes.rep(1)).map { case (invokePipe, pipes) =>
       pipes.foldLeft(invokePipe){
         case (pipeLine, nextPipe) =>
@@ -83,7 +84,7 @@ object Expressions {
       }
     }
 
-  def parseCommand[F[_]: MonadState[*[_], BotEnv[F]]: Monad](tgClient: TelegramClient[IO])(pipeToParse: String)(implicit f1: Raise[F, Throwable]) = for {
+  def parseCommand[F[_]: MonadState[*[_], BotEnv[F]]: Monad: Timer](tgClient: TelegramClient[IO])(pipeToParse: String)(implicit f1: Raise[F, Throwable]) = for {
     res <- Parser.parsePipes[F](pipeToParse)
   } yield res.commonFunc(PipeEnv.empty.copy())
 }

@@ -8,7 +8,7 @@ import NoWhitespace._
 import cats.{Applicative, ApplicativeError, Monad, ~>}
 import cats.data.OptionT
 import cats.effect.concurrent.Ref
-import cats.effect.{IO, Sync}
+import cats.effect.{IO, Sync, Timer}
 import org.encryfoundation.tg.pipelines.{EnvironmentPipe, Pipe}
 import cats.implicits._
 import cats.tagless.FunctorK
@@ -20,9 +20,9 @@ import scala.util.{Failure, Success}
 
 object Parser {
 
-  def parsePipes[F[_]: Monad](source: String)
-                             (implicit F: MonadState[F, BotEnv[F]],
-                              err: Raise[F, Throwable]): F[EnvironmentPipe[F]] = {
+  def parsePipes[F[_]: Monad: Timer](source: String)
+                                    (implicit F: MonadState[F, BotEnv[F]],
+                                     err: Raise[F, Throwable]): F[EnvironmentPipe[F]] = {
     def expr[_: P] = P(Expressions.pipeline[F] ~ End)
     parse(source, expr(_)) match {
       case r: Parsed.Success[EnvironmentPipe[F]] => r.value.pure[F]

@@ -2,6 +2,9 @@ package org.encryfoundation.tg.pipelines
 
 import canoe.api.{Scenario, _}
 import canoe.models.outgoing.TextContent
+import canoe.models.PrivateChat
+import canoe.models.messages.{TelegramMessage, TextMessage}
+import canoe.syntax._
 import cats.{Applicative, Apply, FlatMap, Monad, NonEmptyParallel, Parallel, ~>}
 import cats.effect.Sync
 import cats.implicits._
@@ -22,14 +25,16 @@ object EnvironmentPipe {
 
   def apply[F[_]: MonadState[*[_], BotEnv[F]]](envPipe: PipeEnv => Scenario[F, PipeEnv])(implicit a: Applicative[F]): EnvironmentPipe[F] =
     new EnvironmentPipe[F] {
+      val cancelMessage = "cancel"
       override def commonFunc: PipeEnv => Scenario[F, PipeEnv] = envPipe
       override def run: Scenario[F, PipeEnv] = Scenario.eval(PipeEnv.empty.pure[F])
-      override def compile: PipeEnv => Scenario[F, Unit] = (env: PipeEnv) => envPipe(env).handleErrorWith {
-        case err: BotError => for {
-          botEnv <- Scenario.eval(MonadState[F, BotEnv[F]].get)
-          _ <- Scenario.eval(err.chat.send(TextContent("Error during pipeline"))(botEnv.tgClient.get))
-        } yield ()
-      } >> Scenario.done
+      override def compile: PipeEnv => Scenario[F, Unit] = (env: PipeEnv) => envPipe(env)
+        .handleErrorWith {
+          case err: BotError => for {
+            botEnv <- Scenario.eval(MonadState[F, BotEnv[F]].get)
+            _ <- Scenario.eval(err.chat.send(TextContent(s"Error during pipeline: ${err.msgToChat}"))(botEnv.tgClient.get))
+          } yield ()
+        } >> Scenario.done
     }
 }
 

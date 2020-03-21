@@ -1,24 +1,19 @@
 package org.encryfoundation.tg.pipesParser
 
 import cats.Monad
+import cats.effect.{Clock, IO, Timer}
 import cats.effect.concurrent.Ref
-import cats.kernel.Monoid
+import cats.mtl.MonadState
+import com.olegpy.meow.effects._
 import io.circe.Decoder
 import org.encryfoundation.tg.data.InfoRoute
+import org.encryfoundation.tg.env.BotEnv
 import org.encryfoundation.tg.services.Explorer
 import org.http4s.Request
 import org.scalatest.Matchers
-import cats._
-import cats.data._
-import cats.implicits._
-import cats.mtl.MonadState
-import cats.effect.IO
-import com.olegpy.meow.effects._
-import fastparse._
-import org.encryfoundation.tg.env.BotEnv
-import org.encryfoundation.tg.pipelines.Pipe
 import org.scalatest.propspec.AnyPropSpec
-import tofu.syntax.monadic._
+
+import scala.concurrent.ExecutionContext
 
 class ParserTest extends AnyPropSpec with Matchers with Parser {
 
@@ -33,6 +28,8 @@ class ParserTest extends AnyPropSpec with Matchers with Parser {
   }
 
   property("Correct parsing of alert pipe") {
+
+    implicit val timer = IO.timer(ExecutionContext.global)
 
     val source =
       """
