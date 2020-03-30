@@ -32,7 +32,7 @@ object BotApp extends IOApp {
   override def run(args: List[String]): IO[ExitCode] = {
     Stream.eval(Slf4jLogger.create[IO]).flatMap( implicit logger =>
         Stream.resource(env[IO]).flatMap {
-          case (tgClient, config, explorer, userRepo, authService, userService, commands, parsed) =>
+          case (tgClient, config, commands, parsed) =>
             implicit val client = tgClient
             val bot = Bot.polling[IO]
             Stream.eval(Logger[IO].info("Bot started!")) >>
@@ -73,6 +73,6 @@ object BotApp extends IOApp {
     ))
     menu <- Resource.pure[F, Command[F]](menu(authService, commands))
   } yield {
-    (tgClient, config,  explorer, repo, authService, userService, commands :+ menu, parsedScenarious)
+    (tgClient, config, commands :+ menu, parsedScenarious)
   }
 }
