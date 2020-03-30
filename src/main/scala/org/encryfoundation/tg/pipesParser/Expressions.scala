@@ -8,14 +8,14 @@ import cats.{Applicative, Monad}
 import fastparse.MultiLineWhitespace._
 import fastparse._
 import org.encryfoundation.tg.env.BotEnv
-import org.encryfoundation.tg.env.conditions.{AlertCondition, ValueCondition}
+import org.encryfoundation.tg.env.conditions.{AlertCondition, BooleanCondition, ValueCondition}
 import org.encryfoundation.tg.pipelines.PipeEnv
 import org.encryfoundation.tg.pipelines.alerts.SchedulerAlert
 import org.encryfoundation.tg.pipelines.chat.{InvokePipe, PrintPipe, ReadPipe}
 import org.encryfoundation.tg.pipelines.json.Schema.Field
 
 import scala.concurrent.duration._
-import org.encryfoundation.tg.pipelines.json.{HttpApiJsonParsePipe, Schema}
+import org.encryfoundation.tg.pipelines.json.{HttpApiJsonParsePipe, Schema, Value}
 import org.encryfoundation.tg.pipesParser.Expressions.schedulerAlert
 import tofu.Raise
 
@@ -30,9 +30,18 @@ object Expressions {
   def port[_: P] = P(":" ~ CharIn("0-9").rep(1).!)
   def domain[_: P] = P("." ~ CharIn("a-z").rep(1).!)
   def urlEnd[_: P] = P(port | domain)
+
+  def eqOpCondition[F[_]: Applicative](implicit t: P[_]) = P(STRING.! ~ "==" ~ STRING.!).map { case (var1, var2) =>
+    BooleanCondition[F] (
+      (variables: List[Value]) => variables.filter(variable => (variable.name == var1) || (variable.name == var2)),
+      (variables: List[Value]) => variables.tail.forall(_.value == variables.head.value)
+    )
+  }
+
   def URL[_: P] = P(
     "http://" ~ acceptableLettersInUrl.rep(1).! ~ urlNextPart.rep(0).! ~ urlEnd.! ~ subDirUrl.rep(0).!
   ).map { case (el1, el2, el3, el4) => "http://" + el1 + el2 + el3 + el4}
+
   def fieldWithType[_: P] = P(STRING.! ~ ":" ~ STRING.!).map { case (name, fType) => Field(name, Schema.jsonTypes(fType)) }
   def field[_: P] = P(fieldWithType ~ ("," ~ fieldWithType).rep(0)).map(tup => tup._1 +: tup._2.toList)
 
@@ -55,7 +64,7 @@ object Expressions {
 
   def schedulerAlert[F[_]: MonadState[*[_], BotEnv[F]]: Timer: Monad](implicit t: P[_], f1: Raise[F, Throwable]) =
     P("Alert("~ space ~"fields = [" ~/ field ~ "]," ~ space ~ "grabberPipes = (" ~ grabberPipes ~ "),"
-      ~ space ~ "alertCondition = " ~ valueCondition[F] ~ ","
+      ~ space ~ "alertCondition = " ~ eqOpCondition[F] ~ ","
       ~ space ~ "timeout = " ~ INT ~ ")").map { case (fields, grabbingPipes, condition, time) =>
       SchedulerAlert(
         fields.map(_.name),

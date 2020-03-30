@@ -4,6 +4,6 @@ Invoke(test) => Alert(
         ParseJson(url = http://11.22.33.44:5555/info, fields = [height:string]),
         ParseJson(url = http://11.22.33.45:5555/info, fields = [height:string])
     ),
-    alertCondition = ValueAlert(name == name),
+    alertCondition = name == name,
     timeout = 2
 )

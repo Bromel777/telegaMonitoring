@@ -39,7 +39,7 @@ class ParserTest extends AnyPropSpec with Matchers with Parser {
         |   ParseJson(url = http://172.16.11.12:9051/info, fields = [height:string]),
         |   ParseJson(url = http://172.16.11.12:9051/info, fields = [height:string])
         |   ),
-        | alertCondition = ValueAlert(name == name),
+        | alertCondition = name == name,
         | timeout = 2
         |)
       """.stripMargin
