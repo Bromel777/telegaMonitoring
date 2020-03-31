@@ -1,9 +1,9 @@
 Invoke(test) => Alert(
-    fields = [name: string, name: string],
+    fields = [name: string, name2: string],
     grabberPipes = (
-        ParseJson(url = http://11.22.33.44:5555/info, fields = [height:string]),
-        ParseJson(url = http://11.22.33.45:5555/info, fields = [height:string])
+        ParseJson(url = http://172.16.11.13:9051/info, fields = [uptime:string]),
+        ParseJson(url = http://172.16.11.14:9051/info, fields = [uptime:string])
     ),
-    alertCondition = name == name,
+    alertCondition = name == name2,
     timeout = 2
 )

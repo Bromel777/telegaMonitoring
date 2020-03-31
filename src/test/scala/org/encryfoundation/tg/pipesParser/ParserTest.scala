@@ -34,12 +34,12 @@ class ParserTest extends AnyPropSpec with Matchers with Parser {
     val source =
       """
         |Alert(
-        | fields = [name: string, name: string],
+        | fields = [name1: string, name2: string],
         | grabberPipes = (
         |   ParseJson(url = http://172.16.11.12:9051/info, fields = [height:string]),
         |   ParseJson(url = http://172.16.11.12:9051/info, fields = [height:string])
         |   ),
-        | alertCondition = name == name,
+        | alertCondition = name1 == name2,
         | timeout = 2
         |)
       """.stripMargin
