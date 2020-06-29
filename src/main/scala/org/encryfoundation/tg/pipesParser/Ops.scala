@@ -7,9 +7,15 @@ object Ops {
 
   sealed trait Operator
   object Operator {
-    case object Eq extends Operator
-    case object Gt extends Operator
-    case object Lt extends Operator
+    case object Eq extends Operator {
+      override def toString: String = "=="
+    }
+    case object Gt extends Operator {
+      override def toString: String = ">"
+    }
+    case object Lt extends Operator {
+      override def toString: String = "<"
+    }
   }
 
   def op[_: P](operatorStr: => P[Unit], operator: Operator): P[Operator] = P(operatorStr.!).map(_ => operator)

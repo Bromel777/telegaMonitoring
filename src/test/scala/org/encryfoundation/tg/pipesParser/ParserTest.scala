@@ -8,7 +8,7 @@ import com.olegpy.meow.effects._
 import io.circe.Decoder
 import org.encryfoundation.tg.data.InfoRoute
 import org.encryfoundation.tg.env.BotEnv
-import org.encryfoundation.tg.services.Explorer
+import org.encryfoundation.tg.services.ExplorerService
 import org.http4s.Request
 import org.scalatest.Matchers
 import org.scalatest.propspec.AnyPropSpec
@@ -17,7 +17,7 @@ import scala.concurrent.ExecutionContext
 
 class ParserTest extends AnyPropSpec with Matchers with Parser {
 
-  def explorer[F[_]: Monad]: Explorer[F] = new Explorer[F] {
+  def explorer[F[_]: Monad]: ExplorerService[F] = new ExplorerService[F] {
     override def getInfo: F[InfoRoute] = Monad[F].pure(InfoRoute(
       "", "", 0, 0, "", "", "", 0L, 0L, "", false, 0, List.empty, "", false
     ))
