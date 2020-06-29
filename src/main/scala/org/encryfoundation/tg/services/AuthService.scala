@@ -10,7 +10,6 @@ import tofu.syntax.monadic._
 import tofu.syntax.raise._
 
 trait AuthService[F[_]] {
-
   def registerUser(chat: Chat, login: String, pass: String): F[Unit]
   def isAuth(chat: Chat): F[Boolean]
   def isRegistered(chat: Chat): F[Unit]

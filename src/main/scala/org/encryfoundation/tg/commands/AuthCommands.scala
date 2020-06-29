@@ -11,7 +11,7 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 import org.encryfoundation.tg.config.BotConfig
 import org.encryfoundation.tg.pipesParser.Expressions
-import org.encryfoundation.tg.services.{AuthService, Explorer, UserService}
+import org.encryfoundation.tg.services.{AuthService, ExplorerService, UserService}
 import cats.effect.IO._
 import scala.concurrent.duration._
 
@@ -25,7 +25,7 @@ object AuthCommands {
       } yield ()
     )(authService)
 
-  def nodeStatusMonitoring[F[_]: TelegramClient: Sync](explorer: Explorer[F],
+  def nodeStatusMonitoring[F[_]: TelegramClient: Sync](explorer: ExplorerService[F],
                                                        userService: AuthService[F]): Command[F] =
     Command.makeAuth("nodestatus")(chat =>
       for {
@@ -34,7 +34,7 @@ object AuthCommands {
       } yield ()
     )(userService)
 
-  def chainMonitoring[F[_]: TelegramClient: Monad](explorer: Explorer[F],
+  def chainMonitoring[F[_]: TelegramClient: Monad](explorer: ExplorerService[F],
                                                    authService: AuthService[F]) =
     Command.makeAuth("chainstatus")(chat =>
       for {
@@ -46,7 +46,7 @@ object AuthCommands {
       } yield ()
     )(authService)
 
-  def startNodeMonitoring[F[_]: TelegramClient: Sync: Timer](explorer: Explorer[F],
+  def startNodeMonitoring[F[_]: TelegramClient: Sync: Timer](explorer: ExplorerService[F],
                                                              config: BotConfig,
                                                              prevRes: Ref[F, Map[String, Boolean]],
                                                              authService: AuthService[F]) =
@@ -56,7 +56,7 @@ object AuthCommands {
       } yield ()
     )(authService)
 
-  def recurMonitoring[F[_]: TelegramClient: Sync: Timer](explorer: Explorer[F],
+  def recurMonitoring[F[_]: TelegramClient: Sync: Timer](explorer: ExplorerService[F],
                                                          config: BotConfig,
                                                          prevRes: Ref[F, Map[String, Boolean]],
                                                          chat: Chat): F[Unit] = for {

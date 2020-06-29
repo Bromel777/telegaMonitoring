@@ -14,15 +14,14 @@ import cats.implicits._
 import cats.tagless.FunctorK
 import org.encryfoundation.tg.data.Errors.BotError
 import org.encryfoundation.tg.env.BotEnv
-import tofu.Raise
+import tofu.{HasContext, Raise}
 
 import scala.util.{Failure, Success}
 
 object Parser {
 
-  def parsePipes[F[_]: Monad: Timer](source: String)
-                                    (implicit F: MonadState[F, BotEnv[F]],
-                                     err: Raise[F, Throwable]): F[EnvironmentPipe[F]] = {
+  def parsePipes[F[_]: HasContext[*[_], BotEnv[F]]: Monad: Timer](source: String)
+                                                                  (implicit err: Raise[F, Throwable]): F[EnvironmentPipe[F]] = {
     def expr[_: P] = P(Expressions.pipeline[F] ~ End)
     parse(source, expr(_)) match {
       case r: Parsed.Success[EnvironmentPipe[F]] => r.value.pure[F]

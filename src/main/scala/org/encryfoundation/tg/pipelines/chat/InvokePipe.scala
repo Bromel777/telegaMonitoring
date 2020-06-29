@@ -16,6 +16,6 @@ object InvokePipe {
     EnvironmentPipe[F]( (prevEnv: PipeEnv) =>
       for {
         botChat <- Scenario.expect(command(name).chat)
-      } yield prevEnv.copy(chat = botChat.some)
+      } yield PipeEnv(Map.empty, botChat.some)
     )
 }

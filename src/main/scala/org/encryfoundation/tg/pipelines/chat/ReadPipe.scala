@@ -13,7 +13,7 @@ object ReadPipe {
      EnvironmentPipe((envPipe: PipeEnv) =>
       for {
         text <- Scenario.expect(text)
-      } yield envPipe.copy(variables = envPipe.variables + (varName -> Value(varName, text, StringJsonType)))
+      } yield envPipe.addToEnv(varName, Value(varName, text, StringJsonType))
     )
 }
 

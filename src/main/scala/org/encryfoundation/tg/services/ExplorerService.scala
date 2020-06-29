@@ -18,16 +18,16 @@ import retry.{RetryDetails, _}
 
 import scala.concurrent.ExecutionContext
 
-trait Explorer[F[_]] {
+trait ExplorerService[F[_]] {
 
   def getInfo: F[InfoRoute]
   def nodesStatus: F[List[(Boolean, String)]]
   def makeGetRequest[T](req: Request[F])(implicit decoder: Decoder[T]): F[T]
 }
 
-object Explorer {
+object ExplorerService {
 
-  final private class LiveExplorer[F[_]: Monad: Sync: Sleep: Logger](client: Client[F], config: BotConfig) extends Explorer[F] {
+  final private class LiveExplorerService[F[_]: Monad: Sync: Sleep: Logger](client: Client[F], config: BotConfig) extends ExplorerService[F] {
 
     override def getInfo: F[InfoRoute] = {
       val req = Request[F](
@@ -66,8 +66,8 @@ object Explorer {
     (ec, F.delay(executor.shutdown()))
   })
 
-  def apply[F[_]: ConcurrentEffect: Sleep: Logger](client: Client[F], config: BotConfig): Resource[F, Explorer[F]] = for {
+  def apply[F[_]: ConcurrentEffect: Sleep: Logger](client: Client[F], config: BotConfig): Resource[F, ExplorerService[F]] = for {
     ec              <- pool
     client          <- BlazeClientBuilder[F](ec).resource
-  } yield new LiveExplorer(client, config)
+  } yield new LiveExplorerService(client, config)
 }

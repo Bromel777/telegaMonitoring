@@ -23,4 +23,7 @@ object Errors {
   case class PipeErr(chat: Chat) extends BotError {
     override val msgToChat: String = "Error in pipe!"
   }
+  case class ConditionErr(chat: Chat, conditionMsg: String) extends BotError {
+    override val msgToChat: String = s"Condition error in pipe: $conditionMsg"
+  }
 }

@@ -18,13 +18,13 @@ object Schema {
 
   case class Field(name: String, fType: JsonType)
 
-  def apply(userSchema: Map[String, JsonType]): Schema = new Schema {
+  def apply[F[_]](userSchema: Map[String, JsonType]): Schema = new Schema {
     override def parse(hCursor: HCursor): List[(String, Any)] = {
       val keys = hCursor.keys.get
       keys.foldLeft(List.empty[(String, Any)]) {
         case (list, key) if userSchema.contains(key) =>
           val elem = userSchema.getOrElse(key, StringJsonType)
-          (key -> hCursor.downField(key).as[elem.Underlying](elem.decoder).right.get) :: list
+          (key -> hCursor.downField(key).as[elem.Underlying](elem.decoder)) :: list
         case (list, _) => list
       }
     }

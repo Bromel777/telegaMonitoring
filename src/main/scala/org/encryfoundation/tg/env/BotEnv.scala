@@ -2,7 +2,7 @@ package org.encryfoundation.tg.env
 
 import canoe.api.TelegramClient
 import canoe.models.Chat
-import org.encryfoundation.tg.services.Explorer
+import org.encryfoundation.tg.services.ExplorerService
 
 case class BotEnv[F[_]](tgClient: Option[TelegramClient[F]],
-                        explorer: Explorer[F])
+                        explorer: ExplorerService[F])

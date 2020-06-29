@@ -2,13 +2,8 @@ package org.encryfoundation.tg.pipelines
 
 import canoe.api.{Scenario, _}
 import canoe.models.outgoing.TextContent
-import canoe.models.PrivateChat
-import canoe.models.messages.{TelegramMessage, TextMessage}
-import canoe.syntax._
-import cats.{Applicative, Apply, FlatMap, Monad, NonEmptyParallel, Parallel, ~>}
-import cats.effect.Sync
+import cats.Applicative
 import cats.implicits._
-import cats.kernel.Monoid
 import cats.mtl.MonadState
 import org.encryfoundation.tg.data.Errors.BotError
 import org.encryfoundation.tg.env.BotEnv
